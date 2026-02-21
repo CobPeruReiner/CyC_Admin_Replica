@@ -338,10 +338,33 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT idpersonal,concat(nombres,' ',apellidos) as empleado,usuario,C.nombre as tipo 
-				FROM personal A left join cargo C on C.id=A.cargo
-				where A.usuario='$usuario' and A.password=md5('$pass') and A.idestado=1";
-		//echo $sql;
+
+		$sql = "SELECT 
+                A.IDPERSONAL as idpersonal,
+                CONCAT(A.nombres,' ',A.apellidos) as empleado,
+                A.usuario,
+                C.nombre as tipo
+            FROM personal A
+            LEFT JOIN cargo C ON C.id = A.cargo
+            LEFT JOIN cartera car ON A.id_cartera = car.id
+            WHERE A.usuario = '$usuario'
+              AND A.password = MD5('$pass')
+              AND A.idestado = 1
+              AND A.TIPO_PERSONAL = 'HUMANO'
+              AND (
+                    (A.id_cartera IN (80,65,40) AND car.estado = 1)
+                    OR EXISTS (
+                        SELECT 1
+                        FROM asignacion_tabla at
+                        INNER JOIN tabla_log tl ON at.id_tabla = tl.id
+                        INNER JOIN cartera ca ON tl.id_cartera = ca.id
+                        WHERE at.id_usuario = A.IDPERSONAL
+                          AND ca.estado = 1
+                          AND tl.estado = 0
+                          AND ca.id IN (80,65,40)
+                    )
+                  )";
+
 		$res = mysql_query($sql) or die(mysql_error());
 		$arr_datos = array();
 		while ($row = mysql_fetch_array($res)) {
