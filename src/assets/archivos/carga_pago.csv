@@ -1,0 +1,8 @@
+nombre,cartera,identificador,tipo,fecha_pago,hora_pago,monto,homolo
+prueba2,4,111,prueba,02/10/2020,14:35:27,0,ABC1
+prueba3,3,222,prueba,03/10/2020,15:27:19,123,ABC2
+prueba4,4,33,prueba,04/10/2020,16:19:10,0,ABC3
+prueba5,4,a,prueba,05/10/2020,11:32:32,422.75,ABC4
+prueba6,4,B,prueba,06/10/2020,12:39:15,1000.34,ABC5
+prueba7,4,c,prueba,07/10/2020,12:42:15,0,ABC6
+prueba8,3,1223,prueba,08/10/2020,12:44:11,0,ABC7

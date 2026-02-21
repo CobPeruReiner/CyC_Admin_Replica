@@ -1,0 +1,79 @@
+<?php
+date_default_timezone_set('America/Lima');
+$responce	= new stdClass();
+$responce->codigo = 0;
+$responce->mensaje = 'Error';
+
+if (isset($_REQUEST)) {
+	require_once("../php/clsUsuario.php");
+	require_once("../php/clsHorario.php");
+	session_start();
+	if (!isset($_SESSION['id_ls']) || !isset($_SESSION['user_ls']) || !isset($_SESSION['nombre_ls'])) {
+		$responce->codigo = 2;
+		$responce->mensaje = 'Se ha agotado el tiempo de conexión. Inicie Sesión';
+	} else {
+
+		$verificar = clsUsuario::verificar_sesion($_SESSION['id_ls']);
+		if (sizeof($verificar) == 0) {
+			$responce->codigo = 3;
+			$responce->mensaje = 'Usuario no válido, Inicie Sesión';
+		} else {
+			if ($_REQUEST['control'] == 1) {
+				$responce->codigo = 1;
+				$responce->mensaje = 'Horario Registrado';
+				clsHorario::registrar(utf8_decode($_REQUEST['nombre']), $_REQUEST['inicio'], $_REQUEST['fin'], $_REQUEST['break1'], $_REQUEST['refri'], $_REQUEST['tipo'], $_REQUEST['break2'], $_REQUEST['refri2']);
+			} else if ($_REQUEST['control'] == 2) {
+				$arr_datos = clsHorario::listar();
+				if (sizeof($arr_datos) > 0) {
+					$responce->codigo = 1;
+					$responce->arr_datos = $arr_datos;
+					$responce->mensaje = 'Listado Horario';
+				} else {
+					$responce->mensaje = 'No se encontraron registros';
+				}
+				// } else if ($_REQUEST['control'] == 3) {
+				// 	if (isset($_REQUEST['id'])) {
+				// 		$responce->codigo = 1;
+
+				// 		clsHorario::update_horario($_REQUEST['id'], $_REQUEST['nombre'], $_REQUEST['horainicio'], $_REQUEST['horafin'], $_REQUEST['break1'], $_REQUEST['refri'], $_REQUEST['break2'], $_REQUEST['refri2'], $_REQUEST['dia'], $_REQUEST['estado']);
+				// 		$responce->mensaje = 'Actualizar';
+				// 	}
+				// }
+
+			} else if ($_REQUEST['control'] == 3) {
+				if (isset($_REQUEST['id'])) {
+					$responce->codigo = 1;
+					clsHorario::update_horario(
+						$_REQUEST['id'],
+						$_REQUEST['nombre'],
+						$_REQUEST['horainicio'],
+						$_REQUEST['horafin'],
+						$_REQUEST['break1'],
+						$_REQUEST['refri'],
+						$_REQUEST['break2'],
+						$_REQUEST['refri2'],
+						$_REQUEST['dia'],
+						$_REQUEST['estado']
+					);
+					$responce->mensaje = 'Actualizar';
+				}
+				// 🔽 añade este bloque:
+			} else if ($_REQUEST['control'] == 4) {
+				$id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
+				if ($id > 0) {
+					$ok = clsHorario::baja($id);
+					$responce->codigo = $ok ? 1 : 0;
+					$responce->mensaje = $ok ? 'Horario dado de baja' : 'No se pudo dar de baja';
+				} else {
+					$responce->mensaje = 'ID inválido';
+				}
+				// 🔼
+			} else {
+				$responce->codigo = 1;
+				$responce->mensaje = 'Eliminado';
+				clsContacto::baja($_REQUEST['id']);
+			}
+		}
+	}
+}
+echo json_encode($responce);

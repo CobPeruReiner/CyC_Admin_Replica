@@ -1,0 +1,8 @@
+nombre,cartera,identificador,tipo,fecha_cam,hora_cam,monto,dscto,homolo
+campaña1,3,43dee,1,02/03/2020,14:35:27,123,0.33,abc
+campaña2,4,44422,1,02/04/2020,15:27:19,0,0,def
+campaña3,5,1234,2,02/05/2020,16:19:10,0,0,abc
+campaña4,6,xc,2,02/06/2020,11:32:32,209,23,def
+campaña5,6,a,2,02/07/2020,12:39:15,1000.34,4,abc
+campaña6,6,c,2,02/08/2020,12:42:15,0,0,def
+campaña7,6,1223,2,02/09/2020,12:44:11,0,0,dfdf

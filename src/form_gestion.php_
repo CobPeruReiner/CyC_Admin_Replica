@@ -1,0 +1,1002 @@
+<?php
+	require_once("php/clsUsuario.php");
+	require_once("php/clsGestion.php");
+	require_once("php/clsTable.php");
+	session_start();
+	if (!isset($_SESSION['user_ls'])){
+		header("Location: index.php");
+	}elseif ($_REQUEST['id']==""   ){
+		header("Location: datatable_mi_bandeja.php");
+	}else{
+        $objTable = clsGestion::select_cuenta($_REQUEST['cuenta']);
+         
+		$objDescribe = clsGestion::gui_tbl($objTable['id'],1);
+		$objDescribeg2 = clsGestion::gui_tbl($objTable['id'],2);
+		$objDescribeg3 = clsGestion::gui_tbl($objTable['id'],3);
+		$objDescribe2 = clsGestion::gui_tbl2($_REQUEST['cuenta'],$_REQUEST['identificador']);
+		
+		$objTable2 = clsTable::describe_table($_REQUEST['cuenta']);
+	    
+	    $pagos = clsGestion::listar_pago($_REQUEST['identificador']);
+	    $campanas = clsGestion::listar_campana($_REQUEST['identificador']);
+	//	echo(sizeof($campanas));
+		
+
+	}
+	$obj = new clsUsuario;
+	$arr_datos = $obj->version_system();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8">
+	
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title><?php echo($arr_datos[0][1]); ?></title>
+	
+	<!-- Global stylesheets -->
+	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
+	<link href="assets/css/icons/icomoon/styles.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/bootstrap.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/core.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/components.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/colors.css" rel="stylesheet" type="text/css">
+	<!-- /global stylesheets -->
+
+	<!-- Core JS files -->
+	<script type="text/javascript" src="assets/js/plugins/loaders/pace.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/jquery.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/bootstrap.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/loaders/blockui.min.js"></script>
+	<!-- /core JS files -->
+
+	<!-- Theme JS files -->
+	
+	<script type="text/javascript" src="assets/js/plugins/notifications/bootbox.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/notifications/sweet_alert.min.js"></script>
+	
+	
+	
+	<script type="text/javascript" src="assets/js/plugins/forms/wizards/steps.min.js"></script>
+	
+		<script type="text/javascript" src="assets/js/plugins/forms/styling/switchery.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/styling/switch.min.js"></script>
+
+	<script type="text/javascript" src="assets/js/pages/form_layouts.js"></script>
+
+	<script type="text/javascript" src="assets/js/plugins/tables/datatables/datatables.min.js"></script>
+	
+	<script type="text/javascript" src="assets/js/plugins/forms/selects/select2.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/styling/uniform.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/jasny_bootstrap.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/validation/validate.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/extensions/cookie.js"></script>
+    <script type="text/javascript" src="assets/js/pages/funciones.js"></script>
+	<script type="text/javascript" src="assets/js/core/app.js"></script>
+	
+	
+		<script type="text/javascript" src="assets/js/plugins/ui/moment/moment.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/pickers/daterangepicker.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/pickers/anytime.min.js"></script>
+	
+	
+		<script type="text/javascript" src="assets/js/plugins/pickers/pickadate/picker.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/pickers/pickadate/picker.date.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/pickers/pickadate/picker.time.js"></script>
+	<script type="text/javascript" src="assets/js/pages/picker_date.js"></script>
+
+    
+		
+		
+		
+	<!-- /theme JS files -->
+
+</head>
+
+
+<body>
+
+<?php include 'cabecera.php'; ?>
+
+			<!-- Main content -->
+			<div class="content-wrapper">
+
+				<!-- Page header -->
+				<div class="page-header page-header-default">
+					<div class="page-header-content">
+						<div class="page-title">
+						<h4><a href="datatable_mi_bandeja.php"><i class="icon-arrow-left52 position-left"></i></a> <span class="text-semibold">Seguimiento</span> Contacto</h4>
+						</div>
+
+
+						<div class="heading-elements">
+							<div class="heading-btn-group">
+							    <?php if (sizeof($campanas)>=1){ ?>
+								<a href="javascript:ventana_campaing('<?php echo  $_REQUEST['identificador'] .'&id='.   $_REQUEST['id'];?>')" class="btn btn-link btn-float has-text"><i class="icon-calculator text-primary"></i><span>
+								Campañas</span></a>
+							    
+							    <?php }else{ ?>
+							    
+							    <a href="#"  style="color: red; opacity: 0.5;" class="btn btn-link btn-float has-text"><i class="icon-calculator text-primary"></i><span>
+								Campañas</span></a>
+								<?php } ?>
+							   
+							     <?php if (sizeof($pagos)>=1){ ?>
+								<a href="javascript:ventana_pago('<?php echo isset($objDescribe2["identificador"]) ? utf8_encode($objDescribe2["identificador"]) : utf8_encode($objDescribe2["IDENTIFICADOR"]);  ?>')" class="btn btn-link btn-float has-text"><i class="icon-coins text-primary"></i> <span>Pagos</span></a>
+								 <?php }else{ ?>
+								 <a href="#"  style="color: red; opacity: 0.5;" class="btn btn-link btn-float has-text"><i class="icon-coins text-primary"></i><span>
+								Pagos</span></a>
+								<?php } ?>
+								
+							</div>
+						</div>
+					</div>
+
+					<div class="breadcrumb-line">
+						<ul class="breadcrumb">
+							<li><a href="index.html"><i class="icon-home2 position-left"></i> Inicio</a></li>
+							<li><a href="wizards_steps.html">Gestión</a></li>
+							<li class="active">Contacto</li>
+						</ul>
+
+						<ul class="breadcrumb-elements">
+						
+							<li class="">
+							    <?php
+								echo '<a href="javascript:ventana_buscar('.$objTable['id'].')" style="font-size: 10px;"><i class="icon-search4 position-left"></i>
+									Buscar</a>';
+                                ?>
+								
+							</li>
+						</ul>
+					</div>
+				</div>
+				<!-- /page header -->
+
+
+			
+				<!-- Content area -->
+			<div class="content">
+			    
+				
+				<div class="panel panel-flat">
+						<div class="panel-heading">
+							<div class="heading-elements">
+								<ul class="icons-list">
+			                		<li><a data-action="collapse"></a></li>
+			                		<li><a data-action="reload"></a></li>
+			                		<li><a data-action="close"></a></li>
+			                	</ul>
+		                	</div>
+						</div>
+						<table class="table table-bordered datatable-buscar" style="font-size: 11px;">
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>Identificador</th>
+									<th><?php echo $objTable2[2]['field'];?></th>
+									<th><?php echo $objTable2[3]['field'];?></th>
+									<th><?php echo $objTable2[4]['field'];?></th>
+									<th><?php echo $objTable2[5]['field'];?></th>
+									<th>Asignar</th>
+								</tr>
+							</thead>
+							<tbody>
+								
+							</tbody>
+						</table>
+						
+						
+					</div>
+					
+			     <!-- Wizard with validation -->
+		            <div class="panel panel-white">
+					<div class="panel panel-flat">
+						<div class="panel-heading">
+							<div class="heading-elements">
+								<ul class="icons-list">
+			                		<li><a data-action="collapse"></a></li>
+			                		<li><a data-action="reload"></a></li>
+			                		<li><a data-action="close"></a></li>
+			                	</ul>
+		                	</div>
+						</div>
+
+	                	<form class="steps-basic" action="#">
+						
+						<h6>Datos Cliente</h6>
+							<fieldset>
+									<div class="panel-body">
+									<?php 
+													 for ($i=0; $i < sizeof($objDescribe);$i++){
+													?>
+														
+															<div class="col-lg-3">
+															<label>
+															<?php echo ($objDescribe[$i]['campo']); ?>:
+															</label>
+															<input type="text" id="<?php echo $objDescribe2[$objDescribe[$i]['campo']] ?>" name="<?php $objDescribe2[$objDescribe[$i]['campo']] ?>" class="form-control" placeholder="<?php $objDescribe2[$objDescribe[$i]['campo']] ?>" value="<?php echo $objDescribe2[$objDescribe[$i]['campo']] ?>" readonly />
+															</div>
+														
+											
+													<?php } ?>
+								</div>
+							</fieldset>
+							
+							<h6>Datos Cuenta</h6>
+							<fieldset>
+								<div class="panel-body">
+									<?php 
+													 for ($i=0; $i < sizeof($objDescribeg2);$i++){
+													?>
+														
+															<div class="col-lg-3">
+															<label >
+															<?php echo ($objDescribeg2[$i]['campo']); ?>:
+															</label>
+															<input type="text" id="<?php echo $objDescribe2[$objDescribeg2[$i]['campo']] ?>" name="<?php $objDescribe2[$objDescribeg2[$i]['campo']] ?>" class="form-control" placeholder="<?php $objDescribe2[$objDescribeg2[$i]['campo']] ?>" value="<?php echo $objDescribe2[$objDescribeg2[$i]['campo']] ?>" readonly />
+															</div>
+													
+											
+													<?php } ?>
+								</div>
+							</fieldset>
+							
+							<h6>Datos Deuda</h6>
+							<fieldset>
+								<div class="panel-body">
+									<?php 
+													 for ($i=0; $i < sizeof($objDescribeg3);$i++){
+													?>
+														
+															<div class="col-lg-3">
+															<label >
+															<?php echo ($objDescribeg3[$i]['campo']); ?>:
+															</label>
+															<input type="text" id="<?php echo $objDescribe2[$objDescribeg3[$i]['campo']] ?>" name="<?php $objDescribe2[$objDescribeg3[$i]['campo']] ?>" class="form-control" placeholder="<?php $objDescribe2[$objDescribeg3[$i]['campo']] ?>" value="<?php echo $objDescribe2[$objDescribeg3[$i]['campo']] ?>" readonly />
+															</div>
+													
+											
+													<?php } ?>
+								</div>
+								
+							
+							</fieldset>
+
+						</form>
+		            </div>
+		            </div>
+		            <!-- /wizard with validation -->
+
+						        
+				<!--		        
+				<div class="row">
+				    
+				    
+				    
+						<div class="col-md-12">
+						    
+							<div class="panel panel-info">
+								<div class="panel-heading">
+									<h6 class="panel-title"><i class="icon-user position-left"></i> Datos Cliente <a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+									<div class="heading-elements">
+										<ul class="icons-list">
+					                		<li><a data-action="collapse"></a></li>
+					                		<li><a data-action="reload"></a></li>
+					                		<li><a data-action="close"></a></li>
+					                	</ul>
+				                	</div>
+								</div>
+
+								<div class="panel-body">
+									<?php 
+													 for ($i=0; $i < sizeof($objDescribe);$i++){
+													?>
+														
+															<div class="col-lg-3">
+															<label>
+															<?php echo ($objDescribe[$i]['campo']); ?>:
+															</label>
+															<input type="text" id="<?php echo $objDescribe2[$objDescribe[$i]['campo']] ?>" name="<?php $objDescribe2[$objDescribe[$i]['campo']] ?>" class="form-control" placeholder="<?php $objDescribe2[$objDescribe[$i]['campo']] ?>" value="<?php echo $objDescribe2[$objDescribe[$i]['campo']] ?>" readonly />
+															</div>
+														
+											
+													<?php } ?>
+								</div>
+							</div>
+						</div>
+
+						<div class="col-md-12">
+							<div class="panel panel-success panel-">
+								<div class="panel-heading">
+									<h6 class="panel-title"><i class="icon-credit-card2 position-left"></i> Datos Cuenta <a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+									<div class="heading-elements">
+										<ul class="icons-list">
+					                		<li><a data-action="collapse" class="rotate-180"></a></li>
+					                		<li><a data-action="reload"></a></li>
+					                		<li><a data-action="close"></a></li>
+					                	</ul>
+				                	</div>
+								</div>
+
+								<div class="panel-body">
+									<?php 
+													 for ($i=0; $i < sizeof($objDescribeg2);$i++){
+													?>
+														
+															<div class="col-lg-3">
+															<label >
+															<?php echo ($objDescribeg2[$i]['campo']); ?>:
+															</label>
+															<input type="text" id="<?php echo $objDescribe2[$objDescribeg2[$i]['campo']] ?>" name="<?php $objDescribe2[$objDescribeg2[$i]['campo']] ?>" class="form-control" placeholder="<?php $objDescribe2[$objDescribeg2[$i]['campo']] ?>" value="<?php echo $objDescribe2[$objDescribeg2[$i]['campo']] ?>" readonly />
+															</div>
+													
+											
+													<?php } ?>
+								</div>
+							</div>
+						</div>
+						
+						<div class="col-md-12">
+							<div class="panel panel-warning panel-">
+								<div class="panel-heading">
+									<h6 class="panel-title"><i class="icon-coins position-left"></i> Datos Deuda <a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+									<div class="heading-elements">
+										<ul class="icons-list">
+					                		<li><a data-action="collapse" class="rotate-180"></a></li>
+					                		<li><a data-action="reload"></a></li>
+					                		<li><a data-action="close"></a></li>
+					                	</ul>
+				                	</div>
+								</div>
+
+								<div class="panel-body">
+									<?php 
+													 for ($i=0; $i < sizeof($objDescribeg3);$i++){
+													?>
+														
+															<div class="col-lg-3">
+															<label >
+															<?php echo ($objDescribeg3[$i]['campo']); ?>:
+															</label>
+															<input type="text" id="<?php echo $objDescribe2[$objDescribeg3[$i]['campo']] ?>" name="<?php $objDescribe2[$objDescribeg3[$i]['campo']] ?>" class="form-control" placeholder="<?php $objDescribe2[$objDescribeg3[$i]['campo']] ?>" value="<?php echo $objDescribe2[$objDescribeg3[$i]['campo']] ?>" readonly />
+															</div>
+													
+											
+													<?php } ?>
+								</div>
+							</div>
+						</div>
+						
+				</div>
+				-->	
+				
+						
+				    <div class="panel panel-white">					
+					
+						<div class="panel panel-flat">
+							<div class="panel-heading">
+								<h5 class="panel-title">Gestiones(s)</h5>
+								<div class="heading-elements">
+									<ul class="icons-list">
+				                		<li><a data-action="collapse"></a></li>
+				                		<li><a data-action="reload"></a></li>
+				                		<li><a data-action="close"></a></li>
+				                	</ul>
+			                	</div>
+							</div>
+
+							<div class="panel-body">
+								
+						
+						
+		            <table class="table-bordered table-hover nowrap datatable-table" style="font-size: 11px; width:50%;">
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>Fec. Gestión</th>
+									<th>Identificador</th>
+									<th>Efecto</th>
+									<th>Motivo</th>
+									<th>Contacto</th>
+									<th>Usuario</th>
+									<th>Nom. Contacto</th>
+									<th>Pisos|Puerta|Fachada</th>
+									<th>Promesa</th>
+									<th>Descripción</th>
+									
+								</tr>
+							</thead>
+							<tbody>
+								
+							</tbody>
+						</table>
+						</div>
+					</div>
+				</div>
+						
+				
+					
+					<div class="panel panel-white">
+												
+					<form class="form-gestion" action="#">
+						<div class="panel panel-flat">
+							<div class="panel-heading">
+								<h5 class="panel-title">GESTIÓN TMK</h5>
+								<div class="heading-elements">
+									<ul class="icons-list">
+				                		<li><a data-action="collapse"></a></li>
+				                		<li><a data-action="reload"></a></li>
+				                		<li><a data-action="close"></a></li>
+				                	</ul>
+			                	</div>
+							</div>
+
+							<div class="panel-body">
+								
+								
+								<div class="col-lg-4">
+									<label>Efecto</label>
+									<select id="efecto" name="efecto" data-placeholder="Seleccione" class="select" required="required">
+										<option value=""></option>
+											<?php
+												require_once("php/clsMotivo.php");
+												$obj = new clsMotivo;
+												$arr_datos = $obj->consulta_efecto2();
+												foreach($arr_datos as $datos)
+												echo '<option value="'.$datos['id'].'">'.$datos['nombre'].'</option>';
+											?> 
+									</select>
+								</div>
+								
+								<div class="col-lg-4">
+									<label>Motivo</label>
+									<select id="motivo" name="motivo" data-placeholder="Seleccione" class="select"  required="required">
+										<option value=""></option>
+										
+									</select>
+								</div>
+								
+								<div class="col-lg-4">
+									<label>Contacto</label>
+									<select id="contacto" name="contacto" data-placeholder="Seleccione" class="select"  required="required" >
+										<option value=""></option>
+										
+									</select>
+								</div>
+								
+								<div class="col-lg-12">
+											<label>Descripción</label>
+											<textarea class="form-control required" id="descripcion" name="descripcion" maxlength="500" required="required"></textarea>
+								</div>
+										
+									
+								<div class="col-lg-4">
+									<label>Teléfono</label>
+									<select id="telefono" name="telefono" data-placeholder="Seleccione" class="select"  >
+										<option value=""></option>
+											<?php
+											
+										$doc=	isset($objDescribe2["documento"]) ? utf8_encode($objDescribe2["documento"]) : utf8_encode($objDescribe2["DOCUMENTO"]);
+											
+												require_once("php/clsGestion.php");
+												$obj = new clsGestion;
+												$arr_datos = $obj->telefonos($doc);
+												foreach($arr_datos as $datos)
+												echo '<option value="'.$datos['id'].'">'.$datos['nombre'].'</option>';
+											?> 
+									</select>
+								</div>	
+								
+								<div class="col-lg-4">
+									<label>Dirección</label>
+									<select id="direccion" name="direccion" data-placeholder="Seleccione" class="select"   >
+										<option value=""></option>
+											<?php
+												require_once("php/clsGestion.php");
+												$obj = new clsGestion;
+												$arr_datos = $obj->direcciones($doc);
+												foreach($arr_datos as $datos)
+												echo '<option value="'.$datos['id'].'">'.$datos['nombre'].'</option>';
+											?> 
+									</select>
+								</div>
+								
+								<div class="col-lg-4">
+									<label>Nombre Contacto</label>
+									<input type="text" id="nom_contacto" name="nom_contacto" class="form-control" placeholder="" maxlength="100" required="required" aria-required="true">
+									
+								</div>
+								
+								<div class="col-lg-4">
+									<label>Pisos</label>
+									<input type="number" id="pisos" name="pisos" class="form-control"  min=0 >
+									
+								</div>
+								
+								<div class="col-lg-4">
+									<label>Puerta</label>
+									<input type="text" id="puerta" name="puerta" class="form-control" placeholder="" maxlength="50"  >
+									
+								</div>
+								
+								<div class="col-lg-4">
+									<label>Fachada</label>
+									<input type="text" id="fachada" name="fachada" class="form-control" placeholder="" maxlength="50" >
+									
+								</div>
+								
+								<div id="fec_promesa_" class="col-lg-4">
+									<label>Fec. Pago</label>
+									
+									<div class="input-group">
+													<span class="input-group-addon"><i class="icon-calendar22"></i></span>
+													<input type="text" id="fec_promesa" name="fec_promesa"  class="form-control pickadate_ges" placeholder="<?php echo date('Y-m-d')?>" /> 
+
+										</div>
+												
+									
+								</div>
+								
+								<div class="col-lg-4" id="monto_promesa_">
+									<label>Monto</label>
+									<input type="text" id="monto_promesa" name="monto_promesa" class="form-control" placeholder="" min=1 max="1000" >
+									
+								</div>
+								
+								
+															
+								<div class="text-right">
+								    
+								    <?php 
+								     if (isset($_REQUEST['registro'])? $_REQUEST['registro']:0==0){
+								         $disabled= "";
+								     }else{
+								          $disabled= "disabled";
+								     }
+								    ?>
+								    
+									<button type="submit" class="btn btn-primary" <?php echo $disabled; ?>>Enviar <i class="icon-arrow-right14 position-right"></i></button>
+								</div>
+							</div>
+						</div>
+					</form>
+							                	
+		            </div>
+		            
+						
+
+				</div>
+				<!-- /content area -->
+
+			</div>
+			<!-- /main content -->
+
+		</div>
+		<!-- /page content -->
+
+	</div>
+	<!-- /page container -->
+
+
+<script>
+$(function() {
+    
+    
+    
+    $(".steps-basic").steps({
+        headerTag: "h6",
+        bodyTag: "fieldset",
+        transitionEffect: "fade",
+        titleTemplate: '<span class="number">#index#</span> #title#',
+        labels: {
+            finish: 'Submit'
+        },
+        onFinished: function (event, currentIndex) {
+            alert("Form submitted.");
+        },
+        onStepChanged: function (event, currentIndex, priorIndex) {
+                console.log('demo');
+             
+        },
+    });
+    
+    var table='<?php echo $objTable['nombre']?>';
+    var id_table='<?php echo $objTable['id']?>';
+    var campo1='<?php echo $objTable2[2]['field']?>';
+    var campo2='<?php echo $objTable2[3]['field']?>';
+    var campo3='<?php echo $objTable2[4]['field']?>';
+    var campo4='<?php echo $objTable2[5]['field']?>';
+	listar_buscar(3,table,id_table,campo1,campo2,campo3,campo4);
+	
+	 $("#fec_promesa_").hide();
+	 $("#monto_promesa_").hide();
+	
+   
+  // Basic
+    $('.select').select2();
+
+    // Format icon
+    function iconFormat(icon) {
+        var originalOption = icon.element;
+        if (!icon.id) { return icon.text; }
+        var $icon = "<i class='icon-" + $(icon.element).data('icon') + "'></i>" + icon.text;
+
+        return $icon;
+    }
+
+    // Initialize with options
+    $(".select-icons").select2({
+        templateResult: iconFormat,
+        minimumResultsForSearch: Infinity,
+        templateSelection: iconFormat,
+        escapeMarkup: function(m) { return m; }
+    });
+
+    // Checkboxes, radios
+    $(".styled").uniform({ radioClass: 'choice' });
+
+    // File input
+    $(".file-styled").uniform({
+        fileButtonClass: 'action btn bg-pink-400'
+    });
+    
+	
+	
+	  $("#efecto").change(function(e) {				
+			var efecto = $(this).val();
+			efecto=efecto.split('|')[0];
+			var efecto2=$(this).val().split('|')[1]; 
+			console.log(efecto);
+			console.log(efecto2);
+			
+			
+			if (efecto2==1){
+			    $("#fec_promesa_").show();
+	            $("#monto_promesa_").show();
+			}else{
+			    $("#fec_promesa_").hide();
+                $("#monto_promesa_").hide();
+                 $("#fec_promesa").val("");
+                 $("#monto_promesa").val("");
+			}
+			
+			cargar_motivo(efecto);
+			cargar_contacto(efecto);
+			
+			
+		});
+		
+		
+	
+		$(".form-gestion").on("submit",function(e){
+						e.preventDefault();
+						console.log(e);
+						if(e.result===true){			
+										
+							var cuenta =  '<?php echo $_REQUEST['cuenta']; ?>';
+							var id =  '<?php echo $_REQUEST['id']; ?>';
+							var id_cuenta =  '<?php echo $objTable['id']; ?>';
+							var identificador = '<?php echo $_REQUEST['identificador']; ?>';
+							
+							var observacion =  jQuery('#descripcion').val();
+							var efecto =  jQuery('#efecto').val();
+							var motivo =  jQuery('#motivo').val();
+							var contacto =  jQuery('#contacto').val();
+							var telefono =  jQuery('#telefono').val();
+							var direccion =  jQuery('#direccion').val();
+							var nom_contacto =  jQuery('#nom_contacto').val();
+							var pisos =  jQuery('#pisos').val();
+							var puerta =  jQuery('#puerta').val();
+							var fachada =  jQuery('#fachada').val();
+							
+							var fecha_promesa =  jQuery('#fec_promesa').val();
+							var monto_promesa =  jQuery('#monto_promesa').val();
+							
+							
+							console.log(cuenta);
+							console.log(id);
+							console.log(id_cuenta);
+							console.log(identificador);
+							
+							var control=5;
+							
+								bootbox.confirm("¿Desea guardar gestión?", function(result) {
+								if (result){    
+								    
+								    	registrar(id,id_cuenta,identificador,observacion,efecto,motivo,contacto,telefono,direccion,nom_contacto,pisos,puerta,fachada,control,fecha_promesa,monto_promesa);
+								}
+								
+								});
+							
+						
+							
+							
+						}
+		});
+		
+	var identificador=	'<?php echo isset($objDescribe2["identificador"]) ? utf8_encode($objDescribe2["identificador"]) : utf8_encode($objDescribe2["IDENTIFICADOR"]); ?>';
+	console.log(identificador);
+	var cuenta =  '<?php echo $_REQUEST['cuenta']; ?>';
+
+		listar(identificador,cuenta,6);
+		
+		//listar_campana(identificador,7);
+		//listar_pago(identificador,8);
+							
+		
+
+})
+
+
+
+
+function listar_buscar(control,table,id_table,campo1,campo2,campo3,campo4){
+ $.ajax({
+        data: {control:control,table:table,id_table:id_table,campo1:campo1,campo2:campo2,campo3:campo3,campo4:campo4},
+        url: 'ajax/ajax_gestion.php',
+        dataType: 'json',
+    }).done(function(data){
+            if (data.codigo==0){
+				swal({   title: "Mensaje del Sistema",   text: data.mensaje,    type: "warning" });
+				$(".datatable-buscar tbody").html("");
+			}else{
+			    
+                var table=$('.datatable-buscar').dataTable({
+                    'data': data.arr_datos,
+                    //"responsive": true,
+                    'scrollCollapse': true,
+                    "destroy": true,
+                    "order": [[ 0, "desc" ]],
+                    "bProcessing": true,
+                     "columnDefs":[{   "targets": 6, 
+                                        "width": "20%",
+                                        "data": data, 
+                                        "render": function ( data, type, row, meta ) {
+                                 
+                                          return  '<input class="txt_id" type="hidden" value="'+data[0]+'"/><input class="txt_identificador" type="hidden" value="'+data[1]+'"/><button class="btn_asignar" type="button" title="Asignar"><i class="icon-check" style="font-size: 12px;"></i> </button>'
+                                        }
+								   }]
+					});  
+
+				$('.dataTables_filter input[type=search]').attr('placeholder','Escribe');
+				
+				$('div.dataTables_filter input').attr( 'type', 'text' );
+
+				// Enable Select2 select for the length option
+				$('.dataTables_length select').select2({
+					minimumResultsForSearch: Infinity,
+					width: 'auto'
+				});
+				
+					btn_table();
+
+                $('input[type=search]').keyup(function(e) {
+                    btn_table();
+                }); 
+
+                $(document).on('click', '.paginate_button', function (e) {
+                    btn_table();
+                });	
+
+                $(".dataTables_length select").change(function(e) {
+                    btn_table();
+                }); 
+                
+			}
+    });
+}
+
+
+
+function btn_table(){
+   
+    $(".btn_asignar").unbind();
+    $(".btn_asignar").click(function (e) {
+        var id = $(this).parent().find(".txt_id").val();
+        var cuenta='<?php echo $objTable['nombre']?>';
+        var identificador=$(this).parent().find(".txt_identificador").val();
+        console.log(id+'/'+cuenta+'/'+identificador);
+        
+        //bootbox.confirm("&#191;Desea ver detalle del registro?", function(result) {
+          //  if (result){
+                //opener.location.reload();
+                //window.opener.document.location="form_gestion.php?id="+id+"&cuenta="+cuenta+"&identificador="+identificador
+                
+                 window.location='form_gestion.php?id=' + id+'&cuenta='+cuenta+'&identificador='+identificador;
+                 
+                //window.close();
+            //}
+        //}); 
+    
+    });
+	
+}
+
+
+function registrar(id,id_cuenta,identificador,observacion,efecto,motivo,contacto,telefono,direccion,nom_contacto,pisos,puerta,fachada,control,fecha_promesa,monto_promesa) {
+    $.ajax({
+        data: {id:id,id_cuenta:id_cuenta,identificador:identificador,observacion:observacion,efecto:efecto,motivo:motivo,contacto:contacto,telefono:telefono,direccion:direccion,nom_contacto:nom_contacto,pisos:pisos,puerta:puerta,fachada:fachada,control:control,fecha_promesa:fecha_promesa,monto_promesa:monto_promesa},
+        dataType: 'json',
+        url: 'ajax/ajax_gestion.php',
+        success:  function (response) {           
+        console.log(response);
+            if(response.codigo==1){
+                
+               // window.location='datatable_mi_bandeja.php';
+                location.reload();
+                
+            }else if(response.codigo>=2){
+                swal({ title: "Mensaje del Sistema", text: response.mensaje, type: "error" });
+            }
+        }
+    });
+}
+
+function ventana_buscar(id_Registro){	
+        opciones = 'width = 800, height = 600, toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=yes, left = 50, top = 50';
+        url = 'form_buscar.php?id='; 
+        url += id_Registro
+        window.open(url, 'mp1', opciones); 
+}
+
+function ventana_campaing(identificador){	
+        opciones = 'width = 800, height = 600, toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=yes, left = 50, top = 50';
+        url = 'form_campaing.php?identificador='+identificador;
+        window.open(url, 'mp2', opciones); 
+}
+
+function ventana_pago(identificador){	
+        opciones = 'width = 800, height = 600, toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=yes, left = 50, top = 50';
+        url = 'form_pago.php?identificador='+identificador;
+        window.open(url, 'mp3', opciones); 
+}
+
+
+function cargar_motivo(id) {
+		$.ajax({
+			data: {id:id},
+			dataType: 'html',
+			url: 'ajax/cbb_motivo.php',
+			success:  function (response) {
+				$("#motivo").html(response);
+			}
+		});
+	}
+	
+function cargar_contacto(id) {
+		$.ajax({
+			data: {id:id},
+			dataType: 'html',
+			url: 'ajax/cbb_contacto.php',
+			success:  function (response) {
+				$("#contacto").html(response);
+			}
+		});
+	}
+
+
+
+
+function listar(identificador,cuenta,control){
+ $.ajax({
+        data: {identificador:identificador,cuenta:cuenta,control:control},
+        url: 'ajax/ajax_gestion.php',
+        dataType: 'json',
+    }).done(function(data){
+            if (data.codigo==0){
+                $('.datatable-table').hide();
+				$(".datatable-table tbody").html("");
+			}else{
+			    $('.datatable-table').show();
+                var table=$('.datatable-table').dataTable({
+                    'data': data.arr_datos,
+                     responsive: true,
+                    "destroy": true,
+                    "order": [[ 0, "desc" ]],
+                    "bProcessing": true
+					});  
+
+				$('.dataTables_filter input[type=search]').attr('placeholder','Escribe');
+
+				// Enable Select2 select for the length option
+				$('.dataTables_length select').select2({
+					minimumResultsForSearch: Infinity,
+					width: 'auto'
+				});
+				
+                
+			}
+    });
+}
+
+
+
+function listar_campana(identificador,control){
+ $.ajax({
+        data: {identificador:identificador,control:control},
+        url: 'ajax/ajax_gestion.php',
+        dataType: 'json',
+    }).done(function(data){
+        
+       // console.log(data.arr_datos.length);
+            if (data.codigo==0){
+			
+				$(".datatable-campana tbody").html("");
+			}else{
+			    
+			    new PNotify({
+                        title: 'Mensaje de alerta',
+                        text: 'Tiene '+ data.arr_datos.length +' campañas, favor de visualizar detalle',
+                        icon: 'icon-blocked',
+                        type: 'danger'
+                });
+    
+    
+                var table=$('.datatable-campana').dataTable({
+                    'data': data.arr_datos,
+                    "responsive": true,
+                    "destroy": true,
+                    "order": [[ 0, "desc" ]],
+                    "bProcessing": true
+                    
+					});  
+
+				$('.dataTables_filter input[type=search]').attr('placeholder','Escribe');
+
+				// Enable Select2 select for the length option
+				$('.dataTables_length select').select2({
+					minimumResultsForSearch: Infinity,
+					width: 'auto'
+				});
+				
+				
+                
+			}
+    });
+}
+
+
+
+function listar_pago(identificador,control){
+ $.ajax({
+        data: {identificador:identificador,control:control},
+        url: 'ajax/ajax_gestion.php',
+        dataType: 'json',
+    }).done(function(data){
+        
+        
+        
+            if (data.codigo==0){
+			
+				$(".datatable-pago tbody").html("");
+			}else{
+			    
+			    console.log(data.arr_datos.length);
+                var table=$('.datatable-pago').dataTable({
+                    'data': data.arr_datos,
+                    "responsive": true,
+                    "destroy": true,
+                    "order": [[ 0, "desc" ]],
+                    "bProcessing": true
+                    
+					});  
+
+				$('.dataTables_filter input[type=search]').attr('placeholder','Escribe');
+
+				// Enable Select2 select for the length option
+				$('.dataTables_length select').select2({
+					minimumResultsForSearch: Infinity,
+					width: 'auto'
+				});
+				
+				
+                
+			}
+    });
+}
+
+
+</script>
+</body>
+</html>

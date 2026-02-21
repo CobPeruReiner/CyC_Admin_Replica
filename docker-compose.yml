@@ -1,0 +1,9 @@
+services:
+  cyc_admin_67_app_replica:
+    build: .
+    container_name: cyc_admin_67_app_replica
+    ports:
+      - "5003:80"
+    environment:
+      TZ: America/Lima
+    restart: unless-stopped

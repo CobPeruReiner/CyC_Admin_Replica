@@ -1,0 +1,115 @@
+<?php
+	require_once("php/clsUsuario.php");
+	$obj = new clsUsuario;
+	$arr_datos = $obj->version_system();
+	//echo($arr_datos[0][1]);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title><?php echo($arr_datos[0][1]); ?></title>
+	<!-- Global stylesheets -->
+	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
+	<link href="assets/css/icons/icomoon/styles.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/bootstrap.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/core.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/components.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/colors.css" rel="stylesheet" type="text/css">
+	<!-- /global stylesheets -->
+	<!-- Core JS files -->
+	<script type="text/javascript" src="assets/js/plugins/loaders/pace.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/jquery.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/bootstrap.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/loaders/blockui.min.js"></script>
+	<!-- /core JS files -->
+	<!-- Theme JS files -->
+	<script type="text/javascript" src="assets/js/plugins/forms/validation/validate.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/styling/uniform.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/app.js"></script>
+	<script type="text/javascript" src="assets/js/pages/login_validation.js"></script>
+	<!-- /theme JS files -->
+</head>
+
+<body class="login-container login-cover">
+	<!-- Page container -->
+	<div class="page-container">
+		<!-- Page content -->
+		<div class="page-content">
+			<!-- Main content -->
+			<div class="content-wrapper">
+				<!-- Content area -->
+				<div class="content pb-20">
+
+					<!-- Form with validation -->
+					<form  class="form-validate">
+						<div class="panel panel-body login-form">
+							<div class="text-center">
+								<!--<div class="icon-object border-slate-300 text-slate-300"><!--<i class="icon-users"></i> 
+								</div>-->
+								<img style="border: 0; filter: brightness(0.5);width: 140px;" src="assets/images/logo_index.png" />
+								<h5 class="content-group">Login de Usuarios <small class="display-block">Credenciales</small></h5>
+							</div>
+							
+							
+							<div id="valido" class="no-border" style="display: none;">
+										<button type="button"><span>&times;</span></button>
+										<label class="text-semibold"></label>
+							</div>
+								 
+							<div class="form-group has-feedback has-feedback-left">
+								 							 
+								<input type="text" class="form-control" placeholder="Username" id="username" name="username" required="required" maxlength=15>
+								<div class="form-control-feedback">
+									<i class="icon-user text-muted"></i>
+								</div>
+							</div>
+
+							<div class="form-group has-feedback has-feedback-left">
+								<input type="password" class="form-control" placeholder="Password" id="password" name="password" required="required" maxlength=20>
+								<div class="form-control-feedback">
+									<i class="icon-lock2 text-muted"></i>
+								</div>
+							</div>
+
+							<div class="form-group login-options">
+								<div class="row">
+									<div class="col-sm-4">
+										<label class="checkbox-inline">
+											<input type="checkbox" class="styled" checked="checked">
+											Recuerdame
+										</label>
+									</div>
+
+									<div class="col-sm-8 text-right">
+										<a href="#">¿Olvido su contraseña?</a>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<button type="submit" class="btn bg-blue btn-block" id="btn_ingresar" name="btn_ingresar">Iniciar <i class="icon-arrow-right14 position-right"></i></button>
+							</div>
+
+							<!--<a href="login_registration.php" class="btn btn-default btn-block content-group">Registrar</a>
+							--><span class="help-block text-center no-margin"><p align="justify">Cobranzas Per&uacute; All Rights Reserved Copyright© <?php echo date("Y")?>. Design & Development by:<a href="https://www.facebook.com/amvsolucionesti" target="_blank"> @amvsolucionesti</a></p></span>
+						</div>
+					</form>
+					<!-- /form with validation -->
+
+				</div>
+				<!-- /content area -->
+
+			</div>
+			<!-- /main content -->
+
+		</div>
+		<!-- /page content -->
+
+	</div>
+	<!-- /page container -->
+
+</body>
+</html>

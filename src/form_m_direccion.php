@@ -1,0 +1,327 @@
+<?php
+	require_once("php/clsUsuario.php");
+	require_once("php/clsDireccion.php");
+	session_start();
+	if (!isset($_SESSION['user_ls'])){
+		header("Location: index.php");
+	}elseif ($_REQUEST['id']=="" ){
+		header("Location: datatable_direccion.php");
+	}else{
+		$objDireccion = clsDireccion::select($_REQUEST['id']);
+	}
+	$obj = new clsUsuario;
+	$arr_datos = $obj->version_system();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title><?php echo($arr_datos[0][1]); ?></title>
+	<!-- Global stylesheets -->
+	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
+	<link href="assets/css/icons/icomoon/styles.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/bootstrap.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/core.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/components.css" rel="stylesheet" type="text/css">
+	<link href="assets/css/colors.css" rel="stylesheet" type="text/css">
+	<!-- /global stylesheets -->
+	<!-- Core JS files -->
+	<script type="text/javascript" src="assets/js/plugins/loaders/pace.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/jquery.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/libraries/bootstrap.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/loaders/blockui.min.js"></script>
+	<!-- /core JS files -->
+	<!-- Theme JS files -->
+	<script type="text/javascript" src="assets/js/plugins/notifications/bootbox.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/notifications/sweet_alert.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/validation/validate.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/tables/datatables/datatables.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/selects/select2.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/styling/uniform.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/styling/switchery.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/styling/switch.min.js"></script>
+	<script type="text/javascript" src="assets/js/core/app.js"></script>
+	<script type="text/javascript" src="assets/js/pages/form_layouts.js"></script>
+	<script type="text/javascript" src="assets/js/pages/funciones.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/forms/inputs/touchspin.min.js"></script>
+		
+	<script type="text/javascript" src="assets/js/plugins/ui/moment/moment.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/pickers/daterangepicker.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/pickers/anytime.min.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/pickers/pickadate/picker.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/pickers/pickadate/picker.date.js"></script>
+	<script type="text/javascript" src="assets/js/plugins/pickers/pickadate/picker.time.js"></script>
+	<script type="text/javascript" src="assets/js/pages/picker_date.js"></script>
+	<!-- /theme JS files -->
+</head>
+
+<body>
+<?php include 'cabecera.php'; ?>
+
+			<!-- Main content -->
+			<div class="content-wrapper">
+
+				<!-- Page header -->
+				<div class="page-header page-header-default">
+					<div class="page-header-content">
+						<div class="page-title">
+							<h4><a href="datatable_direccion.php"><i class="icon-arrow-left52 position-left"></i></a> <span class="text-semibold">Modificar</span> Dirección</h4>
+						</div>
+
+						<div class="heading-elements">
+							<div class="heading-btn-group">
+								<a href="#" class="btn btn-link btn-float has-text"><i class="icon-bars-alt text-primary"></i><span>
+								Estadísticas</span></a>
+								<a href="#" class="btn btn-link btn-float has-text"><i class="icon-calendar5 text-primary"></i> <span>Calendario</span></a>
+							</div>
+						</div>
+					</div>
+
+					<div class="breadcrumb-line">
+						<ul class="breadcrumb">
+							<li><a href="#"><i class="icon-home2 position-left"></i> Inicio</a></li>
+							<li class="active">Dirección</li>
+						</ul>
+
+						<ul class="breadcrumb-elements">
+							<li class="dropdown">
+								<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+									<i class="icon-gear position-left"></i>
+									Opciones
+									<span class="caret"></span>
+								</a>
+
+								<ul class="dropdown-menu dropdown-menu-right">
+									<li><a href="datatable_direccion.php"><i class="icon-home9"></i> Dirección</a></li>
+									<li class="divider"></li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<!-- /page header -->
+
+
+				<!-- Content area -->
+				<div class="content">
+					<form action="#" class="form-m-direccion">
+						<div class="panel panel-flat">
+							<div class="panel-heading">
+								<div class="heading-elements">
+									<ul class="icons-list">
+				                		<li><a data-action="collapse"></a></li>
+				                		<li><a data-action="reload"></a></li>
+				                		<li><a data-action="close"></a></li>
+				                	</ul>
+			                	</div>
+							</div>
+							<div class="checkbox checkbox-switch">
+									<label>
+									<?php if ($objDireccion['IDESTADO']==1){
+										echo('<input type="checkbox" id="estado" name="estado" data-on-color="success" data-off-color="danger" data-on-text="Active" data-off-text="Suspended" class="switch" checked="checked">');
+									}else{
+										echo('<input type="checkbox" id="estado" name="estado" data-on-color="success" data-off-color="danger" data-on-text="Active" data-off-text="Suspended" class="switch" >');
+									}?>
+									</label>
+							</div>
+							<div class="panel-body">
+								<div class="row">
+								<legend class="text-semibold"><i class="icon-home9 position-left"></i> Datos Dirección</legend>
+								
+									<div class="col-md-6">
+										<fieldset>
+										<div class="form-group">
+											<label>Documento</label>
+											<input type="hidden" id="id" name="id" class="form-control" value="<?php echo $objDireccion['IDDIRECCION'];?>">
+											<input type="text" id="documento" name="documento" class="form-control" placeholder="10767676651" maxlength=50 value="<?php echo $objDireccion['DOC'];?>" required="required">
+										</div>
+										
+										<div class="form-group">
+											<label>Fuente</label>
+											<input type="text" id="fuente" name="fuente" class="form-control" placeholder="BD-AMV" maxlength=50 value="<?php echo $objDireccion['FUENTE'];?>" required="required">
+										</div>
+										
+										
+										
+										 <div class="form-group">	
+											<label>Dirección</label>
+											<input type="text" id="direccion" name="direccion" class="form-control" placeholder="Calle Angelica Palma 123" value="<?php echo $objDireccion['DIRECCION'];?>" maxlength=100 required="required">
+										</div>
+										
+										 <div class="form-group">	
+											<label>Referencia</label>
+											<input type="text" id="referencia" name="referencia" class="form-control" placeholder="Sodimac San Miguel" maxlength=100 value="<?php echo $objDireccion['REF'];?>" required="required">
+										</div>
+										
+										<div class="form-group">
+												<label>Tipo</label>
+												<input type="text" id="tipo" name="tipo" class="form-control" placeholder="Tipo" maxlength=50 value="<?php echo $objDireccion['TIPO'];?>" required="required">
+										</div>
+											
+
+										
+										
+										
+										</fieldset>
+										
+									</div>
+									
+									<div class="col-md-6">
+										<fieldset>
+											
+										
+										
+										<div class="form-group">	
+											<label>Personal</label>
+											<select id="personal" name="personal" data-placeholder="Seleccione" class="select" required="required">
+												<option value=""></option>
+													<?php
+														$obj = new clsDireccion;
+														$arr_datos = $obj->personal();
+														foreach($arr_datos as $datos)
+														if($datos['id']==$objDireccion['IDPERSONAL']){
+															echo '<option value="'.$datos['id'].'" selected>'.utf8_encode($datos['nombre']).' </option>';
+													
+														}else{
+															echo '<option value="'.$datos['id'].'">'.utf8_encode($datos['nombre']).'</option>';
+														}
+													?> 
+											</select>
+										</div>
+										
+										<div class="form-group">	
+											<label>Departamento</label>
+											<select id="departamento" name="departamento" data-placeholder="Seleccione" class="select" required="required">
+												<option value=""></option>
+													<?php
+														require_once("php/clsSucursal.php");
+														$obj = new clsSucursal;
+														$arr_datos = $obj->departamentos();
+														foreach($arr_datos as $datos)
+														if($datos['id']==$objDireccion['codDepartamento']){
+															echo '<option value="'.$datos['id'].'" selected>'.utf8_encode($datos['nombre']).' </option>';
+													
+														}else{
+															echo '<option value="'.$datos['id'].'">'.utf8_encode($datos['nombre']).'</option>';
+														}
+													?> 
+											</select>
+										</div>
+
+										 <div class="form-group">	
+											<label>Provincia</label>
+											<select id="provincia" name="provincia" data-placeholder="Seleccione" class="select" required="required">
+												<option value=""></option>
+													
+											</select>
+										</div>
+										
+										<div class="form-group">	
+											<label>Distrito</label>
+											<select id="distrito" name="distrito" data-placeholder="Seleccione" class="select" required="required">
+												<option value=""></option>
+													
+											</select>
+										</div>
+											
+											
+											
+										</fieldset>
+									</div>
+										
+								</div>
+								
+								<div class="text-left">
+									<button type="submit" class="btn btn-primary">Registrar <i class="icon-arrow-right14 position-left"></i></button>
+								</div>
+							</div>
+						</div>
+					</form>
+
+	
+				</div>
+				<!-- /content area -->
+
+			</div>
+			<!-- /main content -->
+
+		</div>
+		<!-- /page content -->
+
+	</div>
+	<!-- /page container -->
+
+<script>
+			$(function() {
+				
+				var departamento = $("#departamento").val();
+				cargar_provincias(departamento);
+				
+				$("#departamento").change(function(e) {				
+					var departamento = $(this).val();
+					cargar_provincias(departamento);
+				});
+				
+				$("#provincia").change(function(e) {				
+					var provincia = $(this).val();
+					var id=$(this).val().split('|');
+					console.log(id[0]);
+					//console.log(provincia);
+					cargar_distritos(id[0],id[1]);
+				});
+				
+				
+				
+			});
+			
+			
+			function cargar_provincias(id) {
+				$.ajax({
+					data: {id:id},
+					dataType: 'html',
+					url: 'ajax/cbb_provincia.php',
+					success:  function (response) {
+						$("#provincia").html(response);
+						//console.log(response);
+						
+						var departamento = $("#departamento").val();
+						var provincia= '<?php echo isset($objDireccion['codProvincia']) ? $objDireccion['codProvincia'] : 0 ?>';
+						//console.log(departamento+'|'+provincia);
+						if (provincia >0){
+							
+							$("#provincia").val(departamento+'|'+provincia).trigger('change');
+						}
+			
+					}
+				});
+			}
+			
+			function cargar_distritos(id,id2) {
+				$.ajax({
+					data: {id:id,id2:id2},
+					dataType: 'html',
+					url: 'ajax/cbb_distrito.php',
+					success:  function (response) {
+						$("#distrito").html(response);
+						
+						var departamento = $("#departamento").val();
+						var provincia= '<?php echo isset($objDireccion['codProvincia']) ? $objDireccion['codProvincia'] : 0 ?>';
+						var distrito= '<?php echo isset($objDireccion['codDistrito']) ? $objDireccion['codDistrito'] : 0 ?>';
+						//console.log(departamento+'|'+provincia);
+						if (distrito >0){
+							
+							$("#distrito").val(departamento+'|'+provincia +'|'+ distrito).trigger('change');
+						}
+			
+						
+					}
+				});
+			}
+	
+		
+
+</script>
+</body>
+</html>

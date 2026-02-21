@@ -1,0 +1,17 @@
+.password-container {
+    position: relative;
+    width: 100%;
+}
+
+.password-container .form-control {
+    width: 100%;
+    padding-right: 40px;
+}
+
+.password-container .toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 20px;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
