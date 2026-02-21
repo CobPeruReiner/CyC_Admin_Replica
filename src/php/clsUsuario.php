@@ -464,7 +464,34 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT CONCAT(YEAR(b.fecha_registro),'-', LPAD(b.idpersonal,5,'0') ) as idpersonal,concat(nombres,' ',apellidos) as empleado,b.DOC as dni,b.password,usuario as user,c.nombre as tipo,car.cartera AS cartera, if(IDESTADO=1,'<label>ACTIVE</label>','<label>SUSPENDED</label>') as estado,'' as opciones FROM personal b left join cargo c on c.id=b.CARGO LEFT JOIN cartera car ON b.id_cartera=car.id order by b.IDPERSONAL desc";
+		$sql = "
+			SELECT 
+				CONCAT(YEAR(b.fecha_registro),'-', LPAD(b.idpersonal,5,'0') ) as idpersonal,
+				CONCAT(nombres,' ',apellidos) as empleado,
+				b.DOC as dni,
+				b.password,
+				usuario as user,
+				c.nombre as tipo,
+				car.cartera AS cartera,
+				IF(IDESTADO=1,'<label>ACTIVE</label>','<label>SUSPENDED</label>') as estado,
+				'' as opciones
+			FROM personal b
+			LEFT JOIN cargo c ON c.id=b.CARGO
+			LEFT JOIN cartera car ON b.id_cartera=car.id
+			WHERE
+				b.id_cartera IN (80,65,40)
+				OR EXISTS (
+					SELECT 1
+					FROM asignacion_tabla at
+					INNER JOIN tabla_log tl ON at.id_tabla = tl.id
+					INNER JOIN cartera ca ON tl.id_cartera = ca.id
+					WHERE at.id_usuario = b.IDPERSONAL
+						AND ca.estado = 1
+						AND tl.estado = 0
+						AND ca.id IN (80,65,40)
+				)
+			ORDER BY b.IDPERSONAL DESC
+		";
 		$res = mysql_query($sql) or die(mysql_error());
 		//echo($sql);
 		$arr_datos = array();
