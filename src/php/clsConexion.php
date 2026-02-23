@@ -1,34 +1,46 @@
 <?php
 class clsConexion
 {
-	private $servidor = "192.168.1.31";
-	//private $usuario = "cycwebcob_plataforma";
-	private $usuario = "cycwebcob";
-	//private $password = "dp5P99}Z@";
-	private $password = "k4&{'Ba7Np1";
-	private $bd = "SISTEMAGEST";
-
-	// private $servidor = "192.168.1.39";
-	// private $usuario = "raul";
-	// private $password = "loquecallamoslosadmin1";
-	// private $bd = "SISTEMAGEST_DESARROLLO";
+	private $servidor;
+	private $usuario;
+	private $password;
+	private $bd;
 
 	private $link;
 
-	//echo conectar();
+	private function secret($name)
+	{
+		$path = "/run/secrets/" . $name;
+
+		if (!file_exists($path)) {
+			die("Secret no encontrado: " . $name);
+		}
+
+		return trim(file_get_contents($path));
+	}
+
+	public function __construct()
+	{
+		$this->servidor = $this->secret("db_host");
+		$this->usuario  = $this->secret("db_user");
+		$this->password = $this->secret("db_password");
+		$this->bd       = $this->secret("db_name");
+	}
+
 	public function conectar()
 	{
-		$this->link = mysql_connect($this->servidor, $this->usuario, $this->password) or die("No se encuentra server");
-		mysql_select_db($this->bd) or die("No se encuentra BD");
+		$this->link = mysql_connect(
+			$this->servidor,
+			$this->usuario,
+			$this->password
+		) or die("No se encuentra server");
 
-		// Caracteres especiales
-		// mysql_query("SET NAMES 'utf8'", $this->link);
-
-		//mysql_set_charset('utf8', $link);
+		mysql_select_db($this->bd)
+			or die("No se encuentra BD");
 	}
 
 	public function desconectar()
 	{
-		return mysql_close($this->link) or die("Error cerrando server");
+		return mysql_close($this->link);
 	}
 }
