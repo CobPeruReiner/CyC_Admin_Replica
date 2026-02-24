@@ -21,8 +21,6 @@
 	<link rel="stylesheet" type="text/css" href="util.css">
 	<link rel="stylesheet" type="text/css" href="main.css">
 
-
-
 	<script type="text/javascript" src="assets/js/plugins/loaders/pace.min.js"></script>
 	<script type="text/javascript" src="assets/js/core/libraries/jquery.min.js"></script>
 	<script type="text/javascript" src="assets/js/core/libraries/bootstrap.min.js"></script>
@@ -31,6 +29,7 @@
 	<script type="text/javascript" src="assets/js/plugins/forms/validation/validate.min.js"></script>
 	<script type="text/javascript" src="assets/js/plugins/forms/styling/uniform.min.js"></script>
 
+	<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
 	<style>
 		.validation-error-label {
@@ -52,45 +51,69 @@
 					Hola Somos Cobranzas
 				</span>
 
-				<form class="form-validate">
-					<div id="valido" class="no-border" style="display: none;">
-						<button type="button"><span>&times;</span></button>
-						<label class="text-semibold"></label>
+				<!-- LOGIN -->
+				<div id="login-container">
+					<form class="form-validate">
+						<div id="valido" class="no-border" style="display: none;">
+							<button type="button"><span>&times;</span></button>
+							<label class="text-semibold"></label>
+						</div>
+
+						<div class="wrap-input100 validate-input m-b-10">
+							<input class="input100" type="text" name="username" id="username" placeholder="Username" required="required" maxlength=15 />
+							<span class="focus-input100"></span>
+							<span class="symbol-input100">
+								<i class="fa fa-user"></i>
+							</span>
+						</div>
+						<div class="wrap-input100 validate-input m-b-10">
+							<input class="input100" type="password" name="password" id="password" placeholder="Password" required="required" maxlength=10 />
+							<span class="focus-input100"></span>
+							<span class="symbol-input100">
+								<i class="fa fa-lock"></i>
+							</span>
+						</div>
+
+						<div class="wrap-input100 m-b-10" style="display:flex; justify-content:center;">
+							<div
+								class="g-recaptcha"
+								data-sitekey="6Lcs1swrAAAAAB3W0_EvXBASlyUw-wg_ElaRtrlY">
+							</div>
+						</div>
+						<div class="container-login100-form-btn p-t-10">
+
+
+							<button type="submit" class="login100-form-btn" id="btn_ingresar" name="btn_ingresar">Login </button>
+
+						</div>
+					</form>
+					<div class="text-center w-full p-t-25 p-b-230">
+						<a href="#" class="txt1">
+							Forgot Username / Password?
+						</a>
+					</div>
+					<div class="text-center w-full">
+						<a class="txt1" href="#">
+							Create new account
+							<i class="fa fa-long-arrow-right"></i>
+						</a>
+					</div>
+				</div>
+
+				<!-- ENVIAR CODGIO -->
+				<div id="otp-container" style="display:none">
+
+					<div class="wrap-input100 m-b-10">
+						<input class="input100" type="text" id="otp" placeholder="Ingrese código OTP">
 					</div>
 
-					<div class="wrap-input100 validate-input m-b-10">
-						<input class="input100" type="text" name="username" id="username" placeholder="Username" required="required" maxlength=15 />
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-user"></i>
-						</span>
-					</div>
-					<div class="wrap-input100 validate-input m-b-10">
-						<input class="input100" type="password" name="password" id="password" placeholder="Password" required="required" maxlength=10 />
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-lock"></i>
-						</span>
-					</div>
 					<div class="container-login100-form-btn p-t-10">
-
-
-						<button type="submit" class="login100-form-btn" id="btn_ingresar" name="btn_ingresar">Login </button>
-
+						<button type="button" onclick="verificarOtp()" class="login100-form-btn">
+							Verificar código
+						</button>
 					</div>
-				</form>
-				<div class="text-center w-full p-t-25 p-b-230">
-					<a href="#" class="txt1">
-						Forgot Username / Password?
-					</a>
-				</div>
-				<div class="text-center w-full">
-					<a class="txt1" href="#">
-						Create new account
-						<i class="fa fa-long-arrow-right"></i>
-					</a>
-				</div>
 
+				</div>
 			</div>
 		</div>
 	</div>
@@ -99,13 +122,6 @@
 
 	<script>
 		$(function() {
-
-
-
-
-
-
-
 			$(document).keydown(function(e) {
 				if (e.which == 32) {
 					return false;
@@ -130,8 +146,6 @@
 				input.addEventListener("focus", addClass);
 				input.addEventListener("blur", removeClass);
 			});
-
-
 
 			$("#valido").find("button").addClass("close").click(function(e) {
 				e.preventDefault();
@@ -197,11 +211,7 @@
 					acceso(username, password);
 				}
 			});
-
-
-
 		});
-
 
 		function decodificarEntidadesHTMLNumericas(texto) {
 			return texto.replace(/&#(\d{1,8});/g, function(m, ascii) {
@@ -210,24 +220,76 @@
 		}
 
 		function acceso(username, password) {
+			var captcha = grecaptcha.getResponse();
+
+			if (!captcha) {
+				$("#valido")
+					.addClass("alert alert-danger")
+					.fadeIn()
+					.find("label")
+					.text("Complete el captcha");
+
+				return;
+			}
+
 			$.ajax({
+
 				data: {
 					username: username,
-					password: password
+					password: password,
+					captcha: captcha
 				},
+
 				dataType: 'json',
 				url: 'ajax/ajax_acceso_user.php',
+
 				success: function(response) {
-					console.log(response);
-					if (response.codigo == 1) {
-						$("#valido").addClass("alert alert-success").removeClass("alert-danger").fadeIn('fast').find("label").text('Usuario y/o Password Correcto');
-						setTimeout(function() {
-							window.location = 'dashboard.php';
-						}, 250);
+
+					if (response.codigo == 4) {
+						$("#login-container").hide();
+						$("#otp-container").show();
+
+						sessionStorage.setItem("tmp_user", username);
 					} else {
-						$("#valido").addClass("alert alert-danger").removeClass("alert-success").fadeIn('fast').find("label").text('Usuario y/o Password Incorrecto');
+						$("#valido")
+							.addClass("alert alert-danger")
+							.fadeIn()
+							.find("label")
+							.text(response.mensaje);
+
+						grecaptcha.reset();
 					}
+
 				}
+
+			});
+		}
+
+		function verificarOtp() {
+			var otp = $("#otp").val();
+
+			var usuario = sessionStorage.getItem("tmp_user");
+
+			$.ajax({
+
+				data: {
+					usuario: usuario,
+					otp: otp
+				},
+
+				dataType: 'json',
+				url: 'ajax/ajax_verify_otp.php',
+
+				success: function(response) {
+
+					if (response.codigo == 1) {
+						window.location = "dashboard.php";
+					} else {
+						alert("OTP incorrecto");
+					}
+
+				}
+
 			});
 		}
 	</script>

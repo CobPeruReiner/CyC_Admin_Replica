@@ -630,25 +630,6 @@ class clsUsuario
 		return $arr_datos;
 	}
 
-	// =============================================  FUNCION PARA ACTUALIZAR USUARIO =============================================
-
-	// public static function update_empleado($id, $estado, $APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $FECHAING, $FECHABAJA)
-	// {
-	// 	$objConx = new clsConexion();
-	// 	$objConx->conectar();
-	// 	$fecha = date("Y-m-d H:i:s");
-	// 	if ($PASSWORD == "SI") {
-	// 		$sql = "UPDATE personal set IDESTADO=$estado,APELLIDOS=upper('$APELLIDOS'),NOMBRES=upper('$NOMBRES'),FECHANAC='$FECHANAC',SEXO='$SEXO',DOC='$DOC',ESTCIV=$ESTCIV,CARFAM='$CARFAM',NUMHIJ=$NUMHIJ,DIRECCION='$DIRECCION',DISTRITO='$DISTRITO',DPTO='$DPTO',REFDIR='$REFDIR',TLF='$TLF',CEL='$CEL',EMAIL='$EMAIL',GRADOINS='$GRADOINS',CARGO=$CARGO,IDSUCURSAL=$IDSUCURSAL,USUARIO='$USUARIO',fecha_baja='$FECHABAJA',id_cartera=$cartera,fecha_ing='$FECHAING' WHERE idpersonal =$id";
-	// 	} else {
-	// 		$sql = "UPDATE personal set IDESTADO=$estado,APELLIDOS=upper('$APELLIDOS'),NOMBRES=upper('$NOMBRES'),FECHANAC='$FECHANAC',SEXO='$SEXO',DOC='$DOC',ESTCIV=$ESTCIV,CARFAM='$CARFAM',NUMHIJ=$NUMHIJ,DIRECCION='$DIRECCION',DISTRITO='$DISTRITO',DPTO='$DPTO',REFDIR='$REFDIR',TLF='$TLF',CEL='$CEL',EMAIL='$EMAIL',GRADOINS='$GRADOINS',CARGO=$CARGO,IDSUCURSAL=$IDSUCURSAL,USUARIO='$USUARIO',PASSWORD=md5('$PASSWORD'),fecha_baja='$FECHABAJA',id_cartera=$cartera,fecha_ing='$FECHAING'  WHERE idpersonal =$id";
-	// 	}
-	// 	//echo($sql);
-	// 	$res = mysql_query($sql) or die(mysql_error());
-	// 	$res = mysql_insert_id();
-	// 	$objConx->desconectar();
-	// 	return $res;
-	// }
-
 	public static function update_empleado(
 		$id,
 		$estado,
@@ -710,5 +691,46 @@ class clsUsuario
 
 		$objConx->desconectar();
 		return $res;
+	}
+
+	public static function getAttempts($usuario)
+	{
+		$sql = "SELECT INTENTOS_CYCWEB_ADMIN FROM personal WHERE usuario='$usuario'";
+		$res = mysql_query($sql);
+		$row = mysql_fetch_assoc($res);
+		return $row ? intval($row['INTENTOS_CYCWEB_ADMIN']) : 0;
+	}
+
+	public static function incAttempts($usuario)
+	{
+		$sql = "
+        UPDATE personal
+        SET INTENTOS_CYCWEB_ADMIN = IFNULL(INTENTOS_CYCWEB_ADMIN,0) + 1
+        WHERE usuario='$usuario'
+    ";
+		mysql_query($sql);
+
+		return self::getAttempts($usuario);
+	}
+
+	public static function resetAttempts($usuario)
+	{
+		$sql = "
+        UPDATE personal
+        SET INTENTOS_CYCWEB_ADMIN = 0
+        WHERE usuario='$usuario'
+    ";
+		mysql_query($sql);
+	}
+
+	public static function bloquearUsuario($usuario)
+	{
+		$sql = "
+        UPDATE personal
+        SET IDESTADO = 5
+        WHERE usuario='$usuario'
+          AND IDESTADO = 1
+    ";
+		mysql_query($sql);
 	}
 }
