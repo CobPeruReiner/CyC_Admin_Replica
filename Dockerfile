@@ -1,22 +1,22 @@
 FROM php:5.6-apache
 
-# Cambiar repositorios a archive.debian.org (porque stretch está EOL)
+# usar repos archivados
 RUN sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list \
   && sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list \
   && sed -i '/stretch-updates/d' /etc/apt/sources.list
 
-# Desactivar validación de fecha (repos antiguos)
+# permitir repos expirados
 RUN echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid
 
-# Instalar certificados SSL
+# instalar SSL (fix GPG)
 RUN apt-get update \
-  && apt-get install -y ca-certificates openssl \
+  && apt-get install -y --allow-unauthenticated ca-certificates openssl \
   && update-ca-certificates
 
-# Extensiones mysql legacy
+# extensiones mysql legacy
 RUN docker-php-ext-install mysql mysqli pdo pdo_mysql
 
-# Apache config
+# apache config
 RUN a2enmod rewrite headers \
   && sed -ri 's/^ServerTokens .*/ServerTokens Prod/' /etc/apache2/conf-available/security.conf || true \
   && sed -ri 's/^ServerSignature .*/ServerSignature Off/' /etc/apache2/conf-available/security.conf || true
@@ -37,7 +37,7 @@ RUN mkdir -p /var/log/php \
   echo "openssl.cafile=/etc/ssl/certs/ca-certificates.crt"; \
   } > /usr/local/etc/php/conf.d/zz-local.ini
 
-# Copiar app
+# copiar app
 COPY ./src/ /var/www/html/
 
 RUN chown -R www-data:www-data /var/www/html

@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   cyc_admin_67_app_replica:
     image: cyc_admin_67_app_replica:latest
