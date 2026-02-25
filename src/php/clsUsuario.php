@@ -172,36 +172,14 @@ class clsUsuario
 		return $res;
 	}
 
-	// public static function registrar_empleado($APELLIDOS,$NOMBRES,$FECHANAC,$SEXO,$DOC,$ESTCIV,$CARFAM,$NUMHIJ,$DIRECCION,$DISTRITO,$DPTO,$REFDIR,$TLF,$CEL,$EMAIL,$GRADOINS,$CARGO,$IDSUCURSAL,$USUARIO,$PASSWORD,$cartera,$FECHAING) {
-	// 	$objConx = new clsConexion();
-	// 	$objConx->conectar();
-	// 	$fecha=date("Y-m-d H:i:s");
-
-	// 	$sql = "
-	// 		INSERT INTO personal (
-	// 		APELLIDOS, NOMBRES, FECHANAC, SEXO, DOC, ESTCIV, CARFAM, NUMHIJ,
-	// 		DIRECCION, DISTRITO, DPTO, REFDIR, TLF, CEL, EMAIL, GRADOINS, CARGO,
-	// 		IDSUCURSAL, USUARIO, PASSWORD, IDESTADO, fecha_registro, fecha_baja,
-	// 		id_cartera, api_token, fecha_ing, TIPO_PERSONAL, ANYDESK
-	// 		) VALUES(
-	// 		upper('$APELLIDOS'),upper('$NOMBRES'),'$FECHANAC','$SEXO','$DOC','$ESTCIV','$CARFAM','$NUMHIJ',
-	// 		'$DIRECCION','$DISTRITO','$DPTO','$REFDIR','$TLF','$CEL','$EMAIL','$GRADOINS','$CARGO',
-	// 		'$IDSUCURSAL',upper('$USUARIO'),md5('$PASSWORD'),1,'$fecha','0000-00-00',$cartera,null,'$FECHAING','HUMANO',null
-	// 		)";
-	// 	//echo($sql);
-	// 	$res = mysql_query($sql) or die(mysql_error());
-	// 	$res = mysql_insert_id();
-	// 	$objConx->desconectar();
-	// 	return $res;
-	// }
-
 	public static function registrar_empleado($APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $FECHAING)
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
+
 		$fecha = date("Y-m-d H:i:s");
 
-		// (opcional) sanear para evitar problemas con comillas
+		// escapar
 		$APELLIDOS  = mysql_real_escape_string($APELLIDOS);
 		$NOMBRES    = mysql_real_escape_string($NOMBRES);
 		$FECHANAC   = mysql_real_escape_string($FECHANAC);
@@ -221,33 +199,35 @@ class clsUsuario
 		$CARGO      = mysql_real_escape_string($CARGO);
 		$IDSUCURSAL = mysql_real_escape_string($IDSUCURSAL);
 		$USUARIO    = mysql_real_escape_string($USUARIO);
-		$PASSWORD   = mysql_real_escape_string($PASSWORD);
 		$FECHAING   = mysql_real_escape_string($FECHAING);
 		$cartera    = mysql_real_escape_string($cartera);
 
-		// Si la tabla está vacía, empezará en 1001 (ajusta el 1000 si quieres otro base)
-		mysql_query("SET @anexo := (SELECT COALESCE(MAX(ANEXO_BACKUP), 1000) + 1 FROM personal)") or die(mysql_error());
+		$passwordHash = password_hash($PASSWORD, PASSWORD_BCRYPT);
+
+		mysql_query("SET @anexo := (SELECT COALESCE(MAX(ANEXO_BACKUP), 1000) + 1 FROM personal)");
 
 		$sql = "
-			INSERT INTO personal (
-				APELLIDOS, NOMBRES, FECHANAC, SEXO, DOC, ESTCIV, CARFAM, NUMHIJ,
-				DIRECCION, DISTRITO, DPTO, REFDIR, TLF, CEL, EMAIL, GRADOINS, CARGO,
-				IDSUCURSAL, USUARIO, PASSWORD, IDESTADO, fecha_registro, fecha_baja,
-				id_cartera, api_token, fecha_ing, TIPO_PERSONAL, ANYDESK, ANEXO_BACKUP
-			) VALUES (
-				UPPER('$APELLIDOS'), UPPER('$NOMBRES'), '$FECHANAC', '$SEXO', '$DOC', '$ESTCIV', '$CARFAM', '$NUMHIJ',
-				'$DIRECCION', '$DISTRITO', '$DPTO', '$REFDIR', '$TLF', '$CEL', '$EMAIL', '$GRADOINS', '$CARGO',
-				'$IDSUCURSAL', UPPER('$USUARIO'), MD5('$PASSWORD'), 1, '$fecha', '0000-00-00',
-				$cartera, NULL, '$FECHAING', 'HUMANO', NULL, @anexo
-			)
-		";
-		$res = mysql_query($sql) or die(mysql_error());
-		$id  = mysql_insert_id();
+    INSERT INTO personal (
+        APELLIDOS, NOMBRES, FECHANAC, SEXO, DOC, ESTCIV, CARFAM, NUMHIJ,
+        DIRECCION, DISTRITO, DPTO, REFDIR, TLF, CEL, EMAIL, GRADOINS, CARGO,
+        IDSUCURSAL, USUARIO, PASSWORD, IDESTADO, fecha_registro, fecha_baja,
+        id_cartera, api_token, fecha_ing, TIPO_PERSONAL, ANYDESK, ANEXO_BACKUP
+    ) VALUES (
+        UPPER('$APELLIDOS'), UPPER('$NOMBRES'), '$FECHANAC', '$SEXO', '$DOC',
+        '$ESTCIV', '$CARFAM', '$NUMHIJ', '$DIRECCION', '$DISTRITO', '$DPTO',
+        '$REFDIR', '$TLF', '$CEL', '$EMAIL', '$GRADOINS', '$CARGO',
+        '$IDSUCURSAL', UPPER('$USUARIO'), '$passwordHash', 1,
+        '$fecha', '0000-00-00', $cartera, NULL, '$FECHAING',
+        'HUMANO', NULL, @anexo
+    )";
 
-		mysql_query("UNLOCK TABLES") or die(mysql_error());
+		mysql_query($sql) or die(mysql_error());
+
+		$id = mysql_insert_id();
 
 		$objConx->desconectar();
-		return $id; // puedes luego consultar el anexo con este ID si lo necesitas
+
+		return $id;
 	}
 
 	public static function registrar_item($id_horario, $id)
@@ -299,35 +279,19 @@ class clsUsuario
 		return $res;
 	}
 
-	// public static function baja_user($id)
-	// {
-	// 	$objConx = new clsConexion();
-	// 	$objConx->conectar();
-	// 	$fecha = date("Y-m-d H:i:s");
-	// 	$sql = "UPDATE personal set fecha_baja='$fecha',idestado=0 where idpersonal='$id'";
-	// 	//echo($sql);
-	// 	$res = mysql_query($sql) or die(mysql_error());
-	// 	$res = mysql_insert_id();
-	// 	$objConx->desconectar();
-	// 	return $res;
-	// }
-
 	public static function baja_user($id, $idUsuarioModifica)
 	{
 		$objConx = new clsConexion();
-		$objConx->conectar(); // activa la conexión por defecto
+		$objConx->conectar();
 
-		// Variable de sesión para el trigger (misma conexión por defecto)
 		$idUsuarioModifica = (int)$idUsuarioModifica;
 		mysql_query("SET @id_usuario_modifica := {$idUsuarioModifica}") or die(mysql_error());
 
 		$fecha = date("Y-m-d H:i:s");
 		$sql = "UPDATE personal SET fecha_baja='{$fecha}', idestado=0 WHERE idpersonal='{$id}'";
 
-		// Ejecutar el UPDATE usando la conexión por defecto
 		$res = mysql_query($sql) or die(mysql_error());
 
-		// Mantengo tu return
 		$res = mysql_insert_id();
 
 		$objConx->desconectar();
@@ -339,40 +303,75 @@ class clsUsuario
 		$objConx = new clsConexion();
 		$objConx->conectar();
 
-		$sql = "SELECT 
-                A.IDPERSONAL as idpersonal,
-                CONCAT(A.nombres,' ',A.apellidos) as empleado,
-                A.usuario,
-								A.EMAIL as email,
-                C.nombre as tipo
-            FROM personal A
-            LEFT JOIN cargo C ON C.id = A.cargo
-            LEFT JOIN cartera car ON A.id_cartera = car.id
-            WHERE A.usuario = '$usuario'
-              AND A.password = MD5('$pass')
-              AND A.idestado = 1
-              AND A.TIPO_PERSONAL = 'HUMANO'
-              AND (
-                    (A.id_cartera IN (80,65,40) AND car.estado = 1)
-                    OR EXISTS (
-                        SELECT 1
-                        FROM asignacion_tabla at
-                        INNER JOIN tabla_log tl ON at.id_tabla = tl.id
-                        INNER JOIN cartera ca ON tl.id_cartera = ca.id
-                        WHERE at.id_usuario = A.IDPERSONAL
-                          AND ca.estado = 1
-                          AND tl.estado = 0
-                          AND ca.id IN (80,65,40)
-                    )
-                  )";
+		$usuario = mysql_real_escape_string($usuario);
 
-		$res = mysql_query($sql) or die(mysql_error());
-		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = $row;
+		$sql = "
+			SELECT 
+					A.IDPERSONAL as idpersonal,
+					CONCAT(A.nombres,' ',A.apellidos) as empleado,
+					A.usuario,
+					A.password,
+					A.EMAIL as email
+			FROM personal A
+			WHERE A.usuario='$usuario'
+			AND A.idestado=1
+			AND A.TIPO_PERSONAL='HUMANO'
+			LIMIT 1
+    ";
+
+		$res = mysql_query($sql);
+
+		if (!$res || mysql_num_rows($res) == 0) {
+			$objConx->desconectar();
+			return array();
 		}
+
+		$row = mysql_fetch_array($res);
+
+		$hash = $row['password'];
+
+		$loginCorrecto = false;
+
+		if (!empty($hash)) {
+			// bcrypt
+			if ($hash[0] === '$') {
+				if (password_verify($pass, $hash)) {
+					$loginCorrecto = true;
+
+					if (password_needs_rehash($hash, PASSWORD_BCRYPT)) {
+						$nuevoHash = password_hash($pass, PASSWORD_BCRYPT);
+
+						$id = (int)$row['idpersonal'];
+
+						mysql_query("UPDATE personal SET password='" . mysql_real_escape_string($nuevoHash) . "' WHERE idpersonal=$id");
+					}
+				}
+			} else {
+				// MD5 legacy
+				if (md5($pass) === $hash) {
+					$loginCorrecto = true;
+
+					// migrar a bcrypt automáticamente
+					$nuevoHash = password_hash($pass, PASSWORD_BCRYPT);
+
+					$id = (int)$row['idpersonal'];
+
+					mysql_query("UPDATE personal SET password='" . mysql_real_escape_string($nuevoHash) . "' WHERE idpersonal=$id");
+				}
+			}
+		}
+
+		if ($loginCorrecto) {
+			unset($row['password']);
+
+			$objConx->desconectar();
+
+			return array($row);
+		}
+
 		$objConx->desconectar();
-		return $arr_datos;
+
+		return array();
 	}
 
 	public static function verificar_sesion($id_usuario)
@@ -468,17 +467,50 @@ class clsUsuario
 
 	// ============================================= funcion para verificar el password =============================================
 
-	public static function verificar_password($password, $id)
+	public static function verificar_password($passwordPlano, $id)
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "select * from personal where password='$password' and idpersonal=$id";
+
+		$id = (int)$id;
+
+		$sql = "SELECT password FROM personal WHERE idpersonal=$id LIMIT 1";
+
 		$res = mysql_query($sql) or die(mysql_error());
+
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = $row;
+
+		if (mysql_num_rows($res) == 0) {
+			$objConx->desconectar();
+			return $arr_datos;
 		}
+
+		$row = mysql_fetch_assoc($res);
+
+		$hash = $row['password'];
+
+		$coincide = false;
+
+		if (!empty($hash)) {
+			// bcrypt
+			if ($hash[0] === '$') {
+				if (password_verify($passwordPlano, $hash)) {
+					$coincide = true;
+				}
+			} else {
+				// MD5 legacy
+				if (md5($passwordPlano) === $hash) {
+					$coincide = true;
+				}
+			}
+		}
+
+		if ($coincide) {
+			$arr_datos[] = array("coincide" => true);
+		}
+
 		$objConx->desconectar();
+
 		return $arr_datos;
 	}
 
@@ -660,38 +692,74 @@ class clsUsuario
 		$idUsuarioModifica
 	) {
 		$objConx = new clsConexion();
-		$objConx->conectar(); // activa la conexión por defecto
+		$objConx->conectar();
 
-		// Variable de sesión para el trigger (misma conexión por defecto)
 		$idUsuarioModifica = (int)$idUsuarioModifica;
-		mysql_query("SET @id_usuario_modifica := {$idUsuarioModifica}") or die(mysql_error());
 
-		$fecha = date("Y-m-d H:i:s");
+		mysql_query("SET @id_usuario_modifica := {$idUsuarioModifica}");
 
 		if ($PASSWORD == "SI") {
-			$sql = "UPDATE personal SET IDESTADO=$estado, APELLIDOS=upper('$APELLIDOS'), NOMBRES=upper('$NOMBRES'),
-            FECHANAC='$FECHANAC', SEXO='$SEXO', DOC='$DOC', ESTCIV=$ESTCIV, CARFAM='$CARFAM', NUMHIJ=$NUMHIJ,
-            DIRECCION='$DIRECCION', DISTRITO='$DISTRITO', DPTO='$DPTO', REFDIR='$REFDIR', TLF='$TLF',
-            CEL='$CEL', EMAIL='$EMAIL', GRADOINS='$GRADOINS', CARGO=$CARGO, IDSUCURSAL=$IDSUCURSAL,
-            USUARIO='$USUARIO', fecha_baja='$FECHABAJA', id_cartera=$cartera, fecha_ing='$FECHAING'
-            WHERE idpersonal =$id";
+			$sql = "UPDATE personal SET 
+            IDESTADO=$estado,
+            APELLIDOS=upper('$APELLIDOS'),
+            NOMBRES=upper('$NOMBRES'),
+            FECHANAC='$FECHANAC',
+            SEXO='$SEXO',
+            DOC='$DOC',
+            ESTCIV=$ESTCIV,
+            CARFAM='$CARFAM',
+            NUMHIJ=$NUMHIJ,
+            DIRECCION='$DIRECCION',
+            DISTRITO='$DISTRITO',
+            DPTO='$DPTO',
+            REFDIR='$REFDIR',
+            TLF='$TLF',
+            CEL='$CEL',
+            EMAIL='$EMAIL',
+            GRADOINS='$GRADOINS',
+            CARGO=$CARGO,
+            IDSUCURSAL=$IDSUCURSAL,
+            USUARIO='$USUARIO',
+            fecha_baja='$FECHABAJA',
+            id_cartera=$cartera,
+            fecha_ing='$FECHAING'
+            WHERE idpersonal=$id";
 		} else {
-			$sql = "UPDATE personal SET IDESTADO=$estado, APELLIDOS=upper('$APELLIDOS'), NOMBRES=upper('$NOMBRES'),
-            FECHANAC='$FECHANAC', SEXO='$SEXO', DOC='$DOC', ESTCIV=$ESTCIV, CARFAM='$CARFAM', NUMHIJ=$NUMHIJ,
-            DIRECCION='$DIRECCION', DISTRITO='$DISTRITO', DPTO='$DPTO', REFDIR='$REFDIR', TLF='$TLF',
-            CEL='$CEL', EMAIL='$EMAIL', GRADOINS='$GRADOINS', CARGO=$CARGO, IDSUCURSAL=$IDSUCURSAL,
-            USUARIO='$USUARIO', PASSWORD=md5('$PASSWORD'), fecha_baja='$FECHABAJA', id_cartera=$cartera,
-            fecha_ing='$FECHAING' WHERE idpersonal =$id";
+			$passwordHash = password_hash($PASSWORD, PASSWORD_BCRYPT);
+
+			$sql = "UPDATE personal SET 
+            IDESTADO=$estado,
+            APELLIDOS=upper('$APELLIDOS'),
+            NOMBRES=upper('$NOMBRES'),
+            FECHANAC='$FECHANAC',
+            SEXO='$SEXO',
+            DOC='$DOC',
+            ESTCIV=$ESTCIV,
+            CARFAM='$CARFAM',
+            NUMHIJ=$NUMHIJ,
+            DIRECCION='$DIRECCION',
+            DISTRITO='$DISTRITO',
+            DPTO='$DPTO',
+            REFDIR='$REFDIR',
+            TLF='$TLF',
+            CEL='$CEL',
+            EMAIL='$EMAIL',
+            GRADOINS='$GRADOINS',
+            CARGO=$CARGO,
+            IDSUCURSAL=$IDSUCURSAL,
+            USUARIO='$USUARIO',
+            PASSWORD='" . mysql_real_escape_string($passwordHash) . "',
+            fecha_baja='$FECHABAJA',
+            id_cartera=$cartera,
+            fecha_ing='$FECHAING'
+            WHERE idpersonal=$id";
 		}
 
-		// Ejecutar el UPDATE usando la conexión por defecto
-		$res = mysql_query($sql) or die(mysql_error());
-
-		// Mantengo tu return
-		$res = mysql_insert_id();
+		mysql_query($sql) or die(mysql_error());
 
 		$objConx->desconectar();
-		return $res;
+
+		return true;
 	}
 
 	public static function getAttempts($usuario)
