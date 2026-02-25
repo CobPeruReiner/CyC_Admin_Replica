@@ -345,10 +345,21 @@ $arr_datos = $obj->version_system();
 												<i class="icon-add" id='password-add' style='cursor: pointer'></i>
 											</div>
 											<div class="password-container">
-												<input id="password" name="password" type="password" class="form-control" placeholder="**********" maxlength="20" required="required">
+												<input
+													id="password"
+													name="password"
+													type="password"
+													class="form-control"
+													placeholder="**********"
+													maxlength="20"
+													required="required"
+													pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$">
 												<i class="icon-eye8 toggle-password" id='toggle-password'></i>
 											</div>
-											<span class="help-block text-info"><i class="icon-help position-right"></i> La contraseña debe tener mínimo 5 dígitos</span>
+											<span class="help-block text-info">
+												<i class="icon-help position-right"></i>
+												La contraseña debe tener mínimo 8 caracteres, incluyendo mayúscula, minúscula, número y símbolo especial
+											</span>
 										</div>
 									</blockquote>
 

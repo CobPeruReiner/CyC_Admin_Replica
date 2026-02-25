@@ -70,6 +70,11 @@
 date_default_timezone_set('America/Lima');
 header('Content-Type: application/json; charset=UTF-8');
 
+function validar_password_segura($password)
+{
+	return preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/', $password);
+}
+
 function dbg($msg, $ctx = array())
 {
 	if (isset($ctx['password'])) $ctx['password'] = '***';
@@ -134,6 +139,15 @@ if (sizeof($verificar) == 0) {
 
 if (sizeof($verificar_password) == 1) {
 	$_REQUEST['password'] = 'SI';
+} else {
+	if (!validar_password_segura($_REQUEST['password'])) {
+
+		$responce->codigo = 6;
+		$responce->mensaje = 'La contraseña debe tener mínimo 8 caracteres, incluyendo mayúscula, minúscula, número y símbolo especial';
+
+		echo json_encode($responce);
+		exit;
+	}
 }
 
 if (sizeof($verificar_dni_update) == 1) {
