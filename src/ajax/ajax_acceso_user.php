@@ -11,7 +11,7 @@ require_once("../php/clsCaptcha.php");
 
 $usuario = $_REQUEST['username'];
 $password = $_REQUEST['password'];
-$captcha = $_REQUEST['captcha'] ?? null;
+$captcha = isset($_REQUEST['captcha']) ? $_REQUEST['captcha'] : null;
 
 $ip = $_SERVER['REMOTE_ADDR'];
 
