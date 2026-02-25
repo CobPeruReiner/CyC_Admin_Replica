@@ -1,20 +1,16 @@
 services:
   cyc_admin_67_app_replica:
-    image: cyc_admin_67_app_replica:${VERSION}
-    build:
-      context: .
+    image: cobperureiner2/cyc_admin_67_app_replica:${VERSION}
     ports:
       - target: 80
         published: 5003
         protocol: tcp
         mode: ingress
-
     secrets:
       - db_host
       - db_user
       - db_password
       - db_name
-
     deploy:
       replicas: 1
       restart_policy:
@@ -23,9 +19,6 @@ services:
         order: start-first
         parallelism: 1
         delay: 2s
-      rollback_config:
-        order: stop-first
-        parallelism: 1
 
 secrets:
   db_host:
