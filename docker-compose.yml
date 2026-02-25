@@ -1,7 +1,8 @@
 services:
   cyc_admin_67_app_replica:
-    image: cyc_admin_67_app_replica:latest
-    build: .
+    image: cyc_admin_67_app_replica:${VERSION}
+    build:
+      context: .
     ports:
       - target: 80
         published: 5003
@@ -18,6 +19,13 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 2s
+      rollback_config:
+        order: stop-first
+        parallelism: 1
 
 secrets:
   db_host:
