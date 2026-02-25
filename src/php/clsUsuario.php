@@ -343,6 +343,7 @@ class clsUsuario
                 A.IDPERSONAL as idpersonal,
                 CONCAT(A.nombres,' ',A.apellidos) as empleado,
                 A.usuario,
+								A.EMAIL as email,
                 C.nombre as tipo
             FROM personal A
             LEFT JOIN cargo C ON C.id = A.cargo
@@ -695,42 +696,118 @@ class clsUsuario
 
 	public static function getAttempts($usuario)
 	{
-		$sql = "SELECT INTENTOS_CYCWEB_ADMIN FROM personal WHERE usuario='$usuario'";
+		$objConx = new clsConexion();
+		$objConx->conectar();
+
+		$usuario = mysql_real_escape_string($usuario);
+
+		$sql = "
+        SELECT INTENTOS_CYCWEB_ADMIN
+        FROM personal
+        WHERE USUARIO = '$usuario'
+        LIMIT 1
+    ";
+
 		$res = mysql_query($sql);
+
+		if (!$res) {
+			error_log("MySQL Error getAttempts: " . mysql_error());
+			$objConx->desconectar();
+			return 0;
+		}
+
 		$row = mysql_fetch_assoc($res);
+
+		$objConx->desconectar();
+
 		return $row ? intval($row['INTENTOS_CYCWEB_ADMIN']) : 0;
 	}
 
 	public static function incAttempts($usuario)
 	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+
+		$usuario = mysql_real_escape_string($usuario);
+
 		$sql = "
         UPDATE personal
-        SET INTENTOS_CYCWEB_ADMIN = IFNULL(INTENTOS_CYCWEB_ADMIN,0) + 1
-        WHERE usuario='$usuario'
+        SET INTENTOS_CYCWEB_ADMIN = INTENTOS_CYCWEB_ADMIN + 1
+        WHERE USUARIO = '$usuario'
     ";
-		mysql_query($sql);
 
-		return self::getAttempts($usuario);
+		$res = mysql_query($sql);
+
+		if (!$res) {
+			error_log("MySQL Error incAttempts: " . mysql_error());
+			$objConx->desconectar();
+			return 0;
+		}
+
+		// obtener nuevo valor
+		$sql2 = "
+        SELECT INTENTOS_CYCWEB_ADMIN
+        FROM personal
+        WHERE USUARIO = '$usuario'
+        LIMIT 1
+    ";
+
+		$res2 = mysql_query($sql2);
+
+		$intentos = 0;
+
+		if ($res2) {
+			$row = mysql_fetch_assoc($res2);
+			$intentos = intval($row['INTENTOS_CYCWEB_ADMIN']);
+		}
+
+		$objConx->desconectar();
+
+		return $intentos;
 	}
 
 	public static function resetAttempts($usuario)
 	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+
+		$usuario = mysql_real_escape_string($usuario);
+
 		$sql = "
         UPDATE personal
         SET INTENTOS_CYCWEB_ADMIN = 0
-        WHERE usuario='$usuario'
+        WHERE USUARIO = '$usuario'
     ";
-		mysql_query($sql);
+
+		$res = mysql_query($sql);
+
+		if (!$res) {
+			error_log("MySQL Error resetAttempts: " . mysql_error());
+		}
+
+		$objConx->desconectar();
 	}
 
 	public static function bloquearUsuario($usuario)
 	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+
+		$usuario = mysql_real_escape_string($usuario);
+
 		$sql = "
         UPDATE personal
         SET IDESTADO = 5
-        WHERE usuario='$usuario'
-          AND IDESTADO = 1
+        WHERE USUARIO = '$usuario'
+        AND IDESTADO = 1
     ";
-		mysql_query($sql);
+
+		$res = mysql_query($sql);
+
+		if (!$res) {
+			error_log("MySQL Error bloquearUsuario: " . mysql_error());
+		}
+
+		$objConx->desconectar();
 	}
 }

@@ -3,22 +3,26 @@ session_start();
 
 $responce = new stdClass();
 $responce->codigo = 0;
+$responce->mensaje = "Error";
+$responce->intentos = 0;
 
 require_once("../php/clsUsuario.php");
 require_once("../php/clsOtp.php");
 require_once("../php/clsMailer.php");
 require_once("../php/clsCaptcha.php");
 
-$usuario = $_REQUEST['username'];
-$password = $_REQUEST['password'];
-$captcha = isset($_REQUEST['captcha']) ? $_REQUEST['captcha'] : null;
+$usuario = isset($_POST['username']) ? trim($_POST['username']) : "";
+$password = isset($_POST['password']) ? trim($_POST['password']) : "";
+$captcha = isset($_POST['captcha']) ? $_POST['captcha'] : null;
 
 $ip = $_SERVER['REMOTE_ADDR'];
 
 /* validar captcha */
 if (!clsCaptcha::verificar($captcha, $ip)) {
+
 	$responce->codigo = 0;
 	$responce->mensaje = "Captcha inválido";
+
 	echo json_encode($responce);
 	exit;
 }
@@ -30,12 +34,19 @@ if (sizeof($arr_datos) != 1) {
 
 	$intentos = clsUsuario::incAttempts($usuario);
 
-	if ($intentos >= 3)
+	if ($intentos >= 3) {
+
 		clsUsuario::bloquearUsuario($usuario);
 
-	$responce->codigo = 0;
-	$responce->mensaje = "Usuario o Password incorrecto";
-	$responce->intentos = $intentos;
+		$responce->codigo = 3;
+		$responce->mensaje = "Usuario bloqueado";
+		$responce->intentos = $intentos;
+	} else {
+
+		$responce->codigo = 0;
+		$responce->mensaje = "Usuario o contraseña incorrectos";
+		$responce->intentos = $intentos;
+	}
 
 	echo json_encode($responce);
 	exit;
@@ -47,20 +58,32 @@ clsUsuario::resetAttempts($usuario);
 /* generar OTP */
 $otp = clsOtp::generar();
 
-session_start();
-
+/* guardar OTP */
 clsOtp::guardar($usuario, $otp);
 
 /* enviar correo */
-clsMailer::enviarCodigo(
+$enviado = clsMailer::enviarCodigo(
 	$arr_datos[0]["email"],
 	$arr_datos[0]["empleado"],
 	$otp
 );
 
-/* guardar temporal */
+/* si falla correo */
+if (!$enviado) {
+
+	error_log("Error enviando OTP a: " . $arr_datos[0]["email"]);
+
+	$responce->codigo = 2;
+	$responce->mensaje = "No se pudo enviar el código. Contacte soporte.";
+
+	echo json_encode($responce);
+	exit;
+}
+
+/* guardar sesión temporal */
 $_SESSION["tmp_user"] = $arr_datos[0];
 
+/* éxito */
 $responce->codigo = 4;
 $responce->mensaje = "OTP enviado";
 

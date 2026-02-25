@@ -11,39 +11,71 @@ class clsMailer
 {
   public static function enviarCodigo($correo, $nombre, $codigo)
   {
-    $mail = new PHPMailer();
+    $mail = new PHPMailer(true);
 
-    $mail->isSMTP();
-    $mail->Host = "cobranzasperu.com";
-    $mail->SMTPAuth = true;
-    $mail->Username = "asistencia@cobranzasperu.com";
-    $mail->Password = "6#2(Osd04f8+";
-    $mail->SMTPSecure = "ssl";
-    $mail->Port = 465;
+    try {
 
-    $mail->setFrom("asistencia@cobranzasperu.com", "Cobranzas Perú");
+      $mail->SMTPDebug = 2;
+      $mail->Debugoutput = function ($str, $level) {
+        error_log("SMTP DEBUG [$level]: $str");
+      };
 
-    $mail->addAddress($correo);
+      $mail->isSMTP();
+      $mail->Host = "cobranzasperu.com";
+      $mail->SMTPAuth = true;
+      $mail->Username = "asistencia@cobranzasperu.com";
+      $mail->Password = "6#2(Osd04f8+";
 
-    $mail->isHTML(true);
+      $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+      $mail->Port = 465;
 
-    $mail->Subject = "Código de verificación - Cobranzas Perú";
+      $mail->CharSet = "UTF-8";
 
-    $mail->Body = "
-        Hola {$nombre},<br><br>
-        Tu código de verificación para CYC WEB ADMIN es:<br><br>
-        <div style='
-            font-size:24px;
-            font-weight:bold;
-            color:#860404;
-            letter-spacing:3px;
-        '>
-            {$codigo}
-        </div>
-        <br>
-        Este código vence en 10 minutos.
-      ";
+      $mail->setFrom(
+        "asistencia@cobranzasperu.com",
+        "Cobranzas Perú"
+      );
 
-    $mail->send();
+      if (empty($correo)) {
+        throw new Exception("Correo destino vacío");
+      }
+
+      $mail->addAddress($correo);
+
+      $mail->isHTML(true);
+
+      $mail->Subject = "Código de verificación - Cobranzas Perú";
+
+      $mail->Body = "
+                Hola {$nombre},<br><br>
+                Tu código de verificación para CYC WEB ADMIN es:<br><br>
+                <div style='
+                    font-size:24px;
+                    font-weight:bold;
+                    color:#860404;
+                    letter-spacing:3px;
+                '>
+                    {$codigo}
+                </div>
+                <br>
+                Este código vence en 10 minutos.
+            ";
+
+      if (!$mail->send()) {
+
+        error_log("MAIL ERROR: " . $mail->ErrorInfo);
+
+        return false;
+      }
+
+      error_log("MAIL OK: enviado a " . $correo);
+
+      return true;
+    } catch (Exception $e) {
+
+      error_log("MAIL EXCEPTION: " . $e->getMessage());
+
+      return false;
+    }
   }
 }

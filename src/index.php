@@ -220,10 +220,13 @@
 		}
 
 		function acceso(username, password) {
+
 			var captcha = grecaptcha.getResponse();
 
 			if (!captcha) {
+
 				$("#valido")
+					.removeClass()
 					.addClass("alert alert-danger")
 					.fadeIn()
 					.find("label")
@@ -234,60 +237,116 @@
 
 			$.ajax({
 
+				type: "POST",
+
+				url: "ajax/ajax_acceso_user.php",
+
+				dataType: "json",
+
 				data: {
 					username: username,
 					password: password,
 					captcha: captcha
 				},
 
-				dataType: 'json',
-				url: 'ajax/ajax_acceso_user.php',
-
 				success: function(response) {
 
 					if (response.codigo == 4) {
+
 						$("#login-container").hide();
 						$("#otp-container").show();
 
 						sessionStorage.setItem("tmp_user", username);
-					} else {
-						$("#valido")
-							.addClass("alert alert-danger")
-							.fadeIn()
-							.find("label")
-							.text(response.mensaje);
 
-						grecaptcha.reset();
+						return;
 					}
 
+					var mensaje = response.mensaje || "Error";
+
+					if (response.codigo == 0 && response.intentos !== undefined) {
+
+						mensaje += "<br><span style='color:#ffb3b3'>Intentos: " +
+							response.intentos + " de 3</span>";
+					}
+
+					if (response.codigo == 3) {
+
+						mensaje = "Usuario bloqueado. Contacte al administrador.";
+					}
+
+					$("#valido")
+						.removeClass()
+						.addClass("alert alert-danger")
+						.fadeIn()
+						.find("label")
+						.html(mensaje);
+
+					grecaptcha.reset();
+				},
+
+				error: function() {
+
+					$("#valido")
+						.removeClass()
+						.addClass("alert alert-danger")
+						.fadeIn()
+						.find("label")
+						.html("Error de conexión con el servidor");
 				}
 
 			});
 		}
 
 		function verificarOtp() {
+
 			var otp = $("#otp").val();
 
 			var usuario = sessionStorage.getItem("tmp_user");
 
+			if (!otp) {
+
+				alert("Ingrese el código OTP");
+
+				return;
+			}
+
 			$.ajax({
+
+				type: "POST",
+
+				url: "ajax/ajax_verify_otp.php",
+
+				dataType: "json",
 
 				data: {
 					usuario: usuario,
 					otp: otp
 				},
 
-				dataType: 'json',
-				url: 'ajax/ajax_verify_otp.php',
-
 				success: function(response) {
 
 					if (response.codigo == 1) {
+
 						window.location = "dashboard.php";
-					} else {
-						alert("OTP incorrecto");
+
+						return;
 					}
 
+					if (response.codigo == 2) {
+
+						alert("Sesión expirada. Inicie sesión nuevamente.");
+
+						location.reload();
+
+						return;
+					}
+
+					alert(response.mensaje || "Código incorrecto");
+				},
+
+				error: function() {
+
+					alert("Error de conexión con el servidor");
 				}
 
 			});
