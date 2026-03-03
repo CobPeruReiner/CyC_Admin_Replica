@@ -474,44 +474,41 @@ class clsUsuario
 
 		$id = (int)$id;
 
-		$sql = "SELECT password FROM personal WHERE idpersonal=$id LIMIT 1";
+		$sql = "
+        SELECT CONTRASENA 
+        FROM HISTORIAL_CAMBIOS_CONTRASENA 
+        WHERE ID_USUARIO = $id
+        ORDER BY ID_HIST_CAMBIO_CONTRASENA DESC
+        LIMIT 24
+    ";
 
 		$res = mysql_query($sql) or die(mysql_error());
 
-		$arr_datos = array();
+		while ($row = mysql_fetch_assoc($res)) {
 
-		if (mysql_num_rows($res) == 0) {
-			$objConx->desconectar();
-			return $arr_datos;
-		}
+			$hash = $row['CONTRASENA'];
 
-		$row = mysql_fetch_assoc($res);
+			if (!empty($hash)) {
 
-		$hash = $row['password'];
-
-		$coincide = false;
-
-		if (!empty($hash)) {
-			// bcrypt
-			if ($hash[0] === '$') {
-				if (password_verify($passwordPlano, $hash)) {
-					$coincide = true;
+				// bcrypt
+				if ($hash[0] === '$') {
+					if (password_verify($passwordPlano, $hash)) {
+						$objConx->desconectar();
+						return true;
+					}
 				}
-			} else {
 				// MD5 legacy
-				if (md5($passwordPlano) === $hash) {
-					$coincide = true;
+				else {
+					if (md5($passwordPlano) === $hash) {
+						$objConx->desconectar();
+						return true;
+					}
 				}
 			}
 		}
 
-		if ($coincide) {
-			$arr_datos[] = array("coincide" => true);
-		}
-
 		$objConx->desconectar();
-
-		return $arr_datos;
+		return false;
 	}
 
 	// ============================================= funcion para listar los usuarios =============================================
@@ -694,15 +691,26 @@ class clsUsuario
 		$objConx = new clsConexion();
 		$objConx->conectar();
 
+		$id = (int)$id;
+		$estado = (int)$estado;
+		$NUMHIJ = (int)$NUMHIJ;
+		$ESTCIV = (int)$ESTCIV;
+		$CARGO = (int)$CARGO;
+		$IDSUCURSAL = (int)$IDSUCURSAL;
+		$cartera = (int)$cartera;
 		$idUsuarioModifica = (int)$idUsuarioModifica;
 
 		mysql_query("SET @id_usuario_modifica := {$idUsuarioModifica}");
 
-		if ($PASSWORD == "SI") {
+		/* =====================================
+       SI NO CAMBIA PASSWORD
+    ===================================== */
+		if ($PASSWORD === null) {
+
 			$sql = "UPDATE personal SET 
             IDESTADO=$estado,
-            APELLIDOS=upper('$APELLIDOS'),
-            NOMBRES=upper('$NOMBRES'),
+            APELLIDOS=UPPER('$APELLIDOS'),
+            NOMBRES=UPPER('$NOMBRES'),
             FECHANAC='$FECHANAC',
             SEXO='$SEXO',
             DOC='$DOC',
@@ -724,13 +732,18 @@ class clsUsuario
             id_cartera=$cartera,
             fecha_ing='$FECHAING'
             WHERE idpersonal=$id";
-		} else {
+		}
+		/* =====================================
+       SI CAMBIA PASSWORD
+    ===================================== */ else {
+
 			$passwordHash = password_hash($PASSWORD, PASSWORD_BCRYPT);
+			$passwordHash = mysql_real_escape_string($passwordHash);
 
 			$sql = "UPDATE personal SET 
             IDESTADO=$estado,
-            APELLIDOS=upper('$APELLIDOS'),
-            NOMBRES=upper('$NOMBRES'),
+            APELLIDOS=UPPER('$APELLIDOS'),
+            NOMBRES=UPPER('$NOMBRES'),
             FECHANAC='$FECHANAC',
             SEXO='$SEXO',
             DOC='$DOC',
@@ -748,7 +761,7 @@ class clsUsuario
             CARGO=$CARGO,
             IDSUCURSAL=$IDSUCURSAL,
             USUARIO='$USUARIO',
-            PASSWORD='" . mysql_real_escape_string($passwordHash) . "',
+            PASSWORD='$passwordHash',
             fecha_baja='$FECHABAJA',
             id_cartera=$cartera,
             fecha_ing='$FECHAING'

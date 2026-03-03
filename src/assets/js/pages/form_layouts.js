@@ -37,7 +37,7 @@ $(function () {
   $(".switch").bootstrapSwitch();
 
   var validator = $(
-    ".form-user,.form-m-user,.form-a-horario,.form-m-horario,.form-a-sucursal,.form-m-sucursal,.form-a-cliente,.form-m-cliente,.form-a-cartera,.form-m-cartera,.form-a-menu,.form-m-menu,.form-a-accion,.form-m-accion,.form-a-categoria,.form-m-categoria,.form-a-efecto,.form-m-efecto,.form-a-motivo,.form-m-motivo,.form-a-contacto,.form-m-contacto,.form-a-campana,.form-m-campana,.form-a-pago,.form-m-pago,.form-a-cuota,.form-m-cuota,.form-a-telefono,.form-m-telefono,.form-a-direccion,.form-m-direccion,.form-a-infoadc,.form-m-infoadc,.form-a-table,.form-m-gui,.form-gestion"
+    ".form-user,.form-m-user,.form-a-horario,.form-m-horario,.form-a-sucursal,.form-m-sucursal,.form-a-cliente,.form-m-cliente,.form-a-cartera,.form-m-cartera,.form-a-menu,.form-m-menu,.form-a-accion,.form-m-accion,.form-a-categoria,.form-m-categoria,.form-a-efecto,.form-m-efecto,.form-a-motivo,.form-m-motivo,.form-a-contacto,.form-m-contacto,.form-a-campana,.form-m-campana,.form-a-pago,.form-m-pago,.form-a-cuota,.form-m-cuota,.form-a-telefono,.form-m-telefono,.form-a-direccion,.form-m-direccion,.form-a-infoadc,.form-m-infoadc,.form-a-table,.form-m-gui,.form-gestion",
   ).validate({
     ignore: "input[type=hidden], .select2-search__field, .ignorar", // ignore hidden fields
     errorClass: "validation-error-label",
@@ -142,7 +142,7 @@ $(function () {
             fecha_fin,
             normas,
             plazo,
-            auditor
+            auditor,
           );
         }
       });
@@ -169,7 +169,7 @@ $(function () {
             id_language,
             fecha_caducidad,
             estado,
-            peso
+            peso,
           );
         }
       });
@@ -233,7 +233,7 @@ $(function () {
             password,
             gi,
             cartera,
-            fechaing
+            fechaing,
           );
         }
       });
@@ -262,7 +262,7 @@ $(function () {
             tipo,
             monto,
             homologo,
-            1
+            1,
           );
         }
       });
@@ -289,7 +289,7 @@ $(function () {
             tipo,
             operador,
             personal,
-            1
+            1,
           );
         }
       });
@@ -328,7 +328,7 @@ $(function () {
             dato8,
             dato9,
             dato10,
-            1
+            1,
           );
         }
       });
@@ -363,7 +363,7 @@ $(function () {
             referencia,
             tipo,
             personal,
-            1
+            1,
           );
         }
       });
@@ -393,7 +393,7 @@ $(function () {
             tipo,
             monto,
             homologo,
-            1
+            1,
           );
         }
       });
@@ -425,7 +425,7 @@ $(function () {
             monto,
             porcentaje,
             homologo,
-            1
+            1,
           );
         }
       });
@@ -456,7 +456,7 @@ $(function () {
             refri,
             break2,
             refri2,
-            1
+            1,
           );
         }
       });
@@ -481,7 +481,7 @@ $(function () {
             departamento,
             direccion,
             telefono,
-            1
+            1,
           );
         }
       });
@@ -510,7 +510,7 @@ $(function () {
             descripcion,
             peso,
             1,
-            promesa
+            promesa,
           );
         }
       });
@@ -581,7 +581,7 @@ $(function () {
             tipo,
             personal,
             estado,
-            3
+            3,
           );
         }
       });
@@ -624,7 +624,7 @@ $(function () {
             dato9,
             dato10,
             estado,
-            3
+            3,
           );
         }
       });
@@ -655,7 +655,7 @@ $(function () {
             operador,
             personal,
             estado,
-            3
+            3,
           );
         }
       });
@@ -689,7 +689,7 @@ $(function () {
             monto,
             homologo,
             estado,
-            3
+            3,
           );
         }
       });
@@ -723,7 +723,7 @@ $(function () {
             monto,
             homologo,
             estado,
-            3
+            3,
           );
         }
       });
@@ -759,7 +759,7 @@ $(function () {
             porcentaje,
             homologo,
             estado,
-            3
+            3,
           );
         }
       });
@@ -786,7 +786,7 @@ $(function () {
             homologo,
             descripcion,
             estado,
-            3
+            3,
           );
         }
       });
@@ -816,7 +816,7 @@ $(function () {
             direccion,
             telefono,
             estado,
-            3
+            3,
           );
         }
       });
@@ -845,7 +845,7 @@ $(function () {
             central,
             idcliente,
             estado,
-            3
+            3,
           );
         }
       });
@@ -872,7 +872,7 @@ $(function () {
             homologo,
             descripcion,
             estado,
-            3
+            3,
           );
         }
       });
@@ -1040,7 +1040,7 @@ $(function () {
             break2,
             refri2,
             estado,
-            3
+            3,
           );
         }
       });
@@ -1073,7 +1073,7 @@ $(function () {
             peso,
             estado,
             3,
-            promesa
+            promesa,
           );
         }
       });
@@ -1199,7 +1199,7 @@ $(function () {
             gi,
             cartera,
             fechaing,
-            fechabaja
+            fechabaja,
           );
         }
       });
@@ -1340,7 +1340,7 @@ function registrar_efecto(
   descripcion,
   peso,
   control,
-  promesa
+  promesa,
 ) {
   $.ajax({
     data: {
@@ -1392,7 +1392,7 @@ function registrar_cuota(
   tipo,
   monto,
   homologo,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -1446,7 +1446,7 @@ function registrar_direccion(
   referencia,
   tipo,
   personal,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -1505,7 +1505,7 @@ function registrar_infoadc(
   dato8,
   dato9,
   dato10,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -1561,7 +1561,7 @@ function registrar_telefono(
   tipo,
   operador,
   personal,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -1612,7 +1612,7 @@ function registrar_pago(
   tipo,
   monto,
   homologo,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -1665,7 +1665,7 @@ function registrar_campana(
   monto,
   porcentaje,
   homologo,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -1898,7 +1898,7 @@ function registrar_sucursal(
   departamento,
   direccion,
   telefono,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -1949,7 +1949,7 @@ function registrar_horario(
   refri,
   break2,
   refri2,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2000,7 +2000,7 @@ function registrar_file(
   id_language,
   fecha_caducidad,
   estado,
-  peso
+  peso,
 ) {
   $.ajaxFileUpload({
     async: false,
@@ -2075,7 +2075,7 @@ function registrar(
   password,
   gi,
   cartera,
-  fechaing
+  fechaing,
 ) {
   $.ajax({
     data: {
@@ -2141,7 +2141,7 @@ function modificar_menu(
   estado,
   arr_check,
   arr_items,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2231,7 +2231,7 @@ function modificar_contacto(
   homologo,
   descripcion,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2280,7 +2280,7 @@ function modificar_cliente(
   identificador,
   idpersonal,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2330,7 +2330,7 @@ function modificar_sucursal(
   direccion,
   telefono,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2382,7 +2382,7 @@ function modificar_cartera(
   central,
   idcliente,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2438,7 +2438,7 @@ function modificar_direccion(
   tipo,
   personal,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2501,7 +2501,7 @@ function modificar_infoadc(
   dato9,
   dato10,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2561,7 +2561,7 @@ function modificar_telefono(
   operador,
   personal,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2616,7 +2616,7 @@ function modificar_cuota(
   monto,
   homologo,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2672,7 +2672,7 @@ function modificar_pago(
   monto,
   homologo,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2729,7 +2729,7 @@ function modificar_campana(
   porcentaje,
   homologo,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2783,7 +2783,7 @@ function modificar_motivo(
   homologo,
   descripcion,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -2836,7 +2836,7 @@ function modificar_efecto(
   peso,
   estado,
   control,
-  promesa
+  promesa,
 ) {
   $.ajax({
     data: {
@@ -2934,7 +2934,7 @@ function modificar_horario(
   break2,
   refri2,
   estado,
-  control
+  control,
 ) {
   $.ajax({
     data: {
@@ -3007,7 +3007,7 @@ function modificar(
   gi,
   cartera,
   fechaing,
-  fechabaja
+  fechabaja,
 ) {
   console.log({
     id: id,
@@ -3038,36 +3038,37 @@ function modificar(
     fechabaja: fechabaja,
   });
   $.ajax({
-    data: {
-      id: id,
-      estado: estado,
-      apellidos: apellidos,
-      nombre: nombre,
-      dni: dni,
-      sexo: sexo,
-      fechanac: fechanac,
-      ec: ec,
-      cargo: cargo,
-      direccion: direccion,
-      departamento: departamento,
-      distrito: distrito,
-      referencia: referencia,
-      fam: fam,
-      hijos: hijos,
-      telefono: telefono,
-      movil: movil,
-      email: email,
-      suc: suc,
-      arr_items: arr_items,
-      user: user,
-      password: password,
-      gi: gi,
-      cartera: cartera,
-      fechaing: fechaing,
-      fechabaja: fechabaja,
-    },
-    dataType: "json",
+    type: "POST",
     url: "ajax/ajax_modificar_user.php",
+    dataType: "json",
+    data: {
+      id,
+      estado,
+      apellidos,
+      nombre,
+      dni,
+      sexo,
+      fechanac,
+      ec,
+      cargo,
+      direccion,
+      departamento,
+      distrito,
+      referencia,
+      fam,
+      hijos,
+      telefono,
+      movil,
+      email,
+      suc,
+      arr_items,
+      user,
+      password,
+      gi,
+      cartera,
+      fechaing,
+      fechabaja,
+    },
     success: function (response) {
       console.log(response);
       if (response.codigo == 1) {

@@ -1,211 +1,166 @@
 <?php
-// date_default_timezone_set('America/Lima');
-// $responce	= new stdClass();
-// $responce->codigo = 0;
-// $responce->mensaje = 'Modificado';
-
-
-// if (isset($_REQUEST)) {
-// 	require_once("../php/clsUsuario.php");
-// 	session_start();
-// 	if (!isset($_SESSION['id_ls']) || !isset($_SESSION['user_ls']) || !isset($_SESSION['nombre_ls'])) {
-// 		$responce->codigo = 2;
-// 		$responce->mensaje = 'Se ha agotado el tiempo de conexión. Inicie Sesión';
-// 	} else {
-// 		$verificar = clsUsuario::verificar_sesion($_SESSION['id_ls'], $_SESSION['user_ls']);
-// 		$verificar_dni_update = clsUsuario::verificar_dni_update($_REQUEST['dni'], $_REQUEST['id']);
-// 		$verificar_dni = clsUsuario::verificar_dni($_REQUEST['dni']);
-// 		$verificar_password = clsUsuario::verificar_password($_REQUEST['password'], $_REQUEST['id']);
-// 		if (sizeof($verificar) == 0) {
-// 			$responce->codigo = 3;
-// 			$responce->mensaje = 'Usuario no válido, Inicie Sesión';
-// 		} else if (sizeof($verificar_dni_update) == 1) {
-// 			$responce->codigo = 1;
-// 			if (sizeof($verificar_password) == 1) {
-// 				$_REQUEST['password'] = "SI";
-// 			} else {
-// 				$_REQUEST['password'] = $_REQUEST['password'];
-// 			}
-
-// 			if (isset($_REQUEST['arr_items'])) {
-
-// 				clsUsuario::eliminar_item($_REQUEST['id']);
-
-// 				for ($i = 0; $i < sizeof($_REQUEST['arr_items']); $i++) {
-// 					clsUsuario::registrar_item($_REQUEST['arr_items'][$i], $_REQUEST['id']);
-// 				}
-
-// 				clsUsuario::update_empleado($_REQUEST['id'], $_REQUEST['estado'], utf8_decode($_REQUEST['apellidos']), utf8_decode($_REQUEST['nombre']), utf8_decode($_REQUEST['fechanac']), $_REQUEST['sexo'], $_REQUEST['dni'], $_REQUEST['ec'], $_REQUEST['fam'], $_REQUEST['hijos'], utf8_decode($_REQUEST['direccion']), utf8_decode($_REQUEST['distrito']), utf8_decode($_REQUEST['departamento']), utf8_decode($_REQUEST['referencia']), $_REQUEST['telefono'], $_REQUEST['movil'], utf8_decode($_REQUEST['email']), $_REQUEST['gi'], utf8_decode($_REQUEST['cargo']), $_REQUEST['suc'], $_REQUEST['user'], $_REQUEST['password'], $_REQUEST['cartera'], utf8_decode($_REQUEST['fechaing']), utf8_decode($_REQUEST['fechabaja']), (int)$_SESSION['id_ls']);
-// 			}
-// 		} else {
-// 			if (sizeof($verificar_dni) == 1) {
-// 				$responce->codigo = 4;
-// 				$responce->mensaje = 'Ya se encuentra registrado usuario con DNI: ' . $_REQUEST['dni'];
-// 			} else {
-// 				$responce->codigo = 1;
-// 				if (sizeof($verificar_password) == 1) {
-// 					$_REQUEST['password'] = "SI";
-// 				} else {
-// 					$_REQUEST['password'] = $_REQUEST['password'];
-// 				}
-
-
-// 				if (isset($_REQUEST['arr_items'])) {
-
-// 					clsUsuario::eliminar_item($_REQUEST['id']);
-
-// 					for ($i = 0; $i < sizeof($_REQUEST['arr_items']); $i++) {
-// 						clsUsuario::registrar_item($_REQUEST['arr_items'][$i], $_REQUEST['id']);
-// 					}
-
-// 					clsUsuario::update_empleado($_REQUEST['id'], $_REQUEST['estado'], utf8_decode($_REQUEST['apellidos']), utf8_decode($_REQUEST['nombre']), utf8_decode($_REQUEST['fechanac']), $_REQUEST['sexo'], $_REQUEST['dni'], $_REQUEST['ec'], $_REQUEST['fam'], $_REQUEST['hijos'], utf8_decode($_REQUEST['direccion']), utf8_decode($_REQUEST['distrito']), utf8_decode($_REQUEST['departamento']), utf8_decode($_REQUEST['referencia']), $_REQUEST['telefono'], $_REQUEST['movil'], utf8_decode($_REQUEST['email']), $_REQUEST['gi'], utf8_decode($_REQUEST['cargo']), $_REQUEST['suc'], $_REQUEST['user'], $_REQUEST['password'], $_REQUEST['cartera'], utf8_decode($_REQUEST['fechaing']), utf8_decode($_REQUEST['fechabaja']), (int)$_SESSION['id_ls']);
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
-// echo json_encode($responce);
-
 date_default_timezone_set('America/Lima');
 header('Content-Type: application/json; charset=UTF-8');
+session_start();
+require_once("../php/clsUsuario.php");
 
 function validar_password_segura($password)
 {
 	return preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/', $password);
 }
 
-function dbg($msg, $ctx = array())
-{
-	if (isset($ctx['password'])) $ctx['password'] = '***';
-	if (is_array($ctx)) {
-		foreach ($ctx as $k => $v) {
-			if (is_object($v)) $ctx[$k] = '[object]';
-		}
-	}
-	error_log('[ajax_modificar_user] ' . $msg . ' | ctx=' . json_encode($ctx));
-}
-
-require_once("../php/clsUsuario.php");
-session_start();
-
-header('X-Debug-Script: ajax_modificar_user.php');
-header('X-Debug-Host: ' . gethostname());
-header('X-Debug-SID: ' . session_id());
-header('X-Debug-UserId: ' . (isset($_SESSION['id_ls']) ? (int)$_SESSION['id_ls'] : -1));
-
 $responce = new stdClass();
 $responce->codigo  = 0;
 $responce->mensaje = 'Modificado';
 
-dbg('request_in', array(
-	'sid'     => session_id(),
-	'method'  => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '',
-	'uri'     => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '',
-	'id_ls'   => isset($_SESSION['id_ls']) ? (int)$_SESSION['id_ls'] : null,
-	'user_ls' => isset($_SESSION['user_ls']) ? $_SESSION['user_ls'] : null,
-));
+/* ==========================
+   SOLO POST
+========================== */
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+	http_response_code(405);
+	exit;
+}
 
+/* ==========================
+   VALIDAR SESIÓN
+========================== */
 if (
-	empty($_SESSION['id_ls']) || (int)$_SESSION['id_ls'] <= 0
-	|| empty($_SESSION['user_ls']) || empty($_SESSION['nombre_ls'])
+	empty($_SESSION['id_ls']) ||
+	empty($_SESSION['user_ls']) ||
+	empty($_SESSION['nombre_ls'])
 ) {
-
-	dbg('no_session_or_zero', array('sess' => $_SESSION));
-	http_response_code(401);
 	$responce->codigo  = 2;
-	$responce->mensaje = 'Se ha agotado el tiempo de conexión. Inicie Sesión';
+	$responce->mensaje = 'Sesión inválida';
 	echo json_encode($responce);
 	exit;
 }
+
 $idUsuario = (int)$_SESSION['id_ls'];
 
-$in = $_REQUEST;
-if (isset($in['password'])) $in['password'] = '***';
-dbg('payload_received', $in);
+/* ==========================
+   CAMPOS OBLIGATORIOS
+========================== */
+$campos = ['id', 'dni', 'user', 'apellidos', 'nombre', 'fechanac', 'sexo'];
 
-$verificar            = clsUsuario::verificar_sesion($_SESSION['id_ls'], $_SESSION['user_ls']);
-$verificar_dni_update = clsUsuario::verificar_dni_update($_REQUEST['dni'], $_REQUEST['id']);
-$verificar_dni        = clsUsuario::verificar_dni($_REQUEST['dni']);
-$verificar_password   = clsUsuario::verificar_password($_REQUEST['password'], $_REQUEST['id']);
+foreach ($campos as $campo) {
+	if (!isset($_POST[$campo]) || trim($_POST[$campo]) === '') {
+		$responce->codigo = 8;
+		$responce->mensaje = 'Faltan campos obligatorios';
+		echo json_encode($responce);
+		exit;
+	}
+}
 
+/* ==========================
+   SANITIZAR
+========================== */
+$id       = (int)$_POST['id'];
+$dni      = trim($_POST['dni']);
+$user     = trim($_POST['user']);
+$password = isset($_POST['password']) ? trim($_POST['password']) : '';
+
+$apellidos = trim($_POST['apellidos']);
+$nombre    = trim($_POST['nombre']);
+$fechanac  = trim($_POST['fechanac']);
+$sexo      = trim($_POST['sexo']);
+
+$hijos   = isset($_POST['hijos']) ? (int)$_POST['hijos'] : 0;
+$cartera = isset($_POST['cartera']) ? (int)$_POST['cartera'] : 0;
+
+/* ==========================
+   VALIDACIONES DE NEGOCIO
+========================== */
+
+$verificar = clsUsuario::verificar_sesion($idUsuario, $_SESSION['user_ls']);
 if (sizeof($verificar) == 0) {
 	$responce->codigo  = 3;
-	$responce->mensaje = 'Usuario no válido, Inicie Sesión';
-	dbg('user_invalid', array('id_ls' => $idUsuario));
+	$responce->mensaje = 'Usuario no válido';
 	echo json_encode($responce);
 	exit;
 }
 
-if (sizeof($verificar_password) == 1) {
-	$_REQUEST['password'] = 'SI';
-} else {
-	if (!validar_password_segura($_REQUEST['password'])) {
+/* Validar DNI */
+$verificar_dni_update = clsUsuario::verificar_dni_update($dni, $id);
+$verificar_dni        = clsUsuario::verificar_dni($dni);
 
-		$responce->codigo = 6;
+if (sizeof($verificar_dni_update) != 1 && sizeof($verificar_dni) == 1) {
+	$responce->codigo  = 4;
+	$responce->mensaje = 'Ya se encuentra registrado usuario con DNI: ' . $dni;
+	echo json_encode($responce);
+	exit;
+}
+
+/* ==========================
+   VALIDAR PASSWORD
+========================== */
+
+if ($password !== '') {
+
+	if (!validar_password_segura($password)) {
+		$responce->codigo  = 6;
 		$responce->mensaje = 'La contraseña debe tener mínimo 8 caracteres, incluyendo mayúscula, minúscula, número y símbolo especial';
-
 		echo json_encode($responce);
 		exit;
 	}
-}
 
-if (sizeof($verificar_dni_update) == 1) {
-	$responce->codigo = 1;
+	$yaUsada = clsUsuario::verificar_password($password, $id);
+
+	if ($yaUsada === true) {
+		$responce->codigo  = 10;
+		$responce->mensaje = 'No puede reutilizar ninguna de sus últimas 24 contraseñas';
+		echo json_encode($responce);
+		exit;
+	}
 } else {
-	if (sizeof($verificar_dni) == 1) {
-		$responce->codigo  = 4;
-		$responce->mensaje = 'Ya se encuentra registrado usuario con DNI: ' . $_REQUEST['dni'];
-		dbg('dni_duplicado', array('dni' => $_REQUEST['dni']));
-		echo json_encode($responce);
-		exit;
-	} else {
-		$responce->codigo = 1;
+	$password = null;
+}
+
+/* ==========================
+   ITEMS
+========================== */
+if (isset($_POST['arr_items']) && is_array($_POST['arr_items'])) {
+
+	clsUsuario::eliminar_item($id);
+
+	foreach ($_POST['arr_items'] as $item) {
+		clsUsuario::registrar_item($item, $id);
 	}
 }
 
-if (isset($_REQUEST['arr_items'])) {
-	clsUsuario::eliminar_item($_REQUEST['id']);
-	for ($i = 0; $i < sizeof($_REQUEST['arr_items']); $i++) {
-		clsUsuario::registrar_item($_REQUEST['arr_items'][$i], $_REQUEST['id']);
-	}
-}
-
-dbg('about_to_update', array(
-	'id'        => isset($_REQUEST['id']) ? $_REQUEST['id'] : null,
-	'dni'       => isset($_REQUEST['dni']) ? $_REQUEST['dni'] : null,
-	'idUsuario' => $idUsuario
-));
+/* ==========================
+   UPDATE
+========================== */
 
 clsUsuario::update_empleado(
-	$_REQUEST['id'],
-	$_REQUEST['estado'],
-	utf8_decode($_REQUEST['apellidos']),
-	utf8_decode($_REQUEST['nombre']),
-	utf8_decode($_REQUEST['fechanac']),
-	$_REQUEST['sexo'],
-	$_REQUEST['dni'],
-	$_REQUEST['ec'],
-	$_REQUEST['fam'],
-	$_REQUEST['hijos'],
-	utf8_decode($_REQUEST['direccion']),
-	utf8_decode($_REQUEST['distrito']),
-	utf8_decode($_REQUEST['departamento']),
-	utf8_decode($_REQUEST['referencia']),
-	$_REQUEST['telefono'],
-	$_REQUEST['movil'],
-	utf8_decode($_REQUEST['email']),
-	$_REQUEST['gi'],
-	utf8_decode($_REQUEST['cargo']),
-	$_REQUEST['suc'],
-	$_REQUEST['user'],
-	$_REQUEST['password'],
-	$_REQUEST['cartera'],
-	utf8_decode($_REQUEST['fechaing']),
-	utf8_decode($_REQUEST['fechabaja']),
+	$id,
+	$_POST['estado'],
+	utf8_decode($apellidos),
+	utf8_decode($nombre),
+	$fechanac,
+	$sexo,
+	$dni,
+	$_POST['ec'],
+	$_POST['fam'],
+	$hijos,
+	utf8_decode($_POST['direccion']),
+	utf8_decode($_POST['distrito']),
+	utf8_decode($_POST['departamento']),
+	utf8_decode($_POST['referencia']),
+	$_POST['telefono'],
+	$_POST['movil'],
+	utf8_decode($_POST['email']),
+	$_POST['gi'],
+	utf8_decode($_POST['cargo']),
+	$_POST['suc'],
+	$user,
+	$password, // null si no cambia
+	$cartera,
+	utf8_decode($_POST['fechaing']),
+	utf8_decode($_POST['fechabaja']),
 	$idUsuario
 );
 
-dbg('update_done', array('idUsuario' => $idUsuario));
+$responce->codigo  = 1;
+$responce->mensaje = 'Modificado';
 
 echo json_encode($responce);

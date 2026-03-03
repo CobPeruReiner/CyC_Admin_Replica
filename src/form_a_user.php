@@ -126,10 +126,8 @@ $arr_datos = $obj->version_system();
 					<div class="panel-body">
 						<div class="row">
 							<legend class="text-semibold"><i class="icon-reading position-left"></i> Datos Personales</legend>
-
 							<div class="col-md-4">
 								<fieldset>
-
 									<div class="form-group">
 										<label>Apellido(s)</label>
 										<input type="text" id="apellidos" name="apellidos" class="form-control" placeholder="Apellido Paterno, Materno" maxlength=70 required="required">
@@ -139,6 +137,7 @@ $arr_datos = $obj->version_system();
 										<label>Nombre(s)</label>
 										<input type="text" id="nombre" name="nombre" class="form-control" placeholder="Nombre Completo" maxlength=70 required="required">
 									</div>
+
 									<div class="form-group">
 										<label>Sexo</label>
 										<select id="sexo" name="sexo" data-placeholder="Seleccione" class="form-control" required="required">
@@ -169,10 +168,12 @@ $arr_datos = $obj->version_system();
 											?>
 										</select>
 									</div>
+
 									<div class="form-group">
 										<label>Documento</label>
 										<input type="text" id="dni" name="dni" class="form-control" placeholder="DNI" maxlength=10 required="required">
 									</div>
+
 									<div class="form-group">
 										<label>Cargo</label>
 										<select id="cargo" name="cargo" data-placeholder="Seleccione" class="select" required="required">
@@ -186,6 +187,7 @@ $arr_datos = $obj->version_system();
 											?>
 										</select>
 									</div>
+
 									<div class="form-group">
 										<label>Móvil</label>
 										<input type="text" id="movil" name="movil" class="form-control" placeholder="979846212" maxlength=9 required="required">
@@ -198,18 +200,15 @@ $arr_datos = $obj->version_system();
 											<input type="text" id="fechaing" name="fechaing" class="form-control pickadate" placeholder="1991-02-03" />
 										</div>
 									</div>
-
 								</fieldset>
 							</div>
-
 							<div class="col-md-4">
-
 								<fieldset>
-
 									<div class="form-group">
 										<label>Dirección</label>
 										<input type="text" id="direccion" name="direccion" class="form-control" placeholder="Dirección" maxlength=50 required="required">
 									</div>
+
 									<div class="form-group">
 										<label>Departamento</label>
 										<select id="departamento" name="departamento" data-placeholder="Seleccione" class="select" required="required">
@@ -228,7 +227,6 @@ $arr_datos = $obj->version_system();
 										<label>Provincia</label>
 										<select id="provincia" name="provincia" data-placeholder="Seleccione" class="select" required="required">
 											<option value=""></option>
-
 										</select>
 									</div>
 
@@ -236,7 +234,6 @@ $arr_datos = $obj->version_system();
 										<label>Distrito</label>
 										<select id="distrito" name="distrito" data-placeholder="Seleccione" class="select" required="required">
 											<option value=""></option>
-
 										</select>
 									</div>
 
@@ -244,6 +241,7 @@ $arr_datos = $obj->version_system();
 										<label>Referencia</label>
 										<input type="text" id="referencia" name="referencia" class="form-control" placeholder="Tottus de la Marina" required="required" />
 									</div>
+
 									<div class="form-group">
 										<label>Familia</label>
 										<select id="fam" name="fam" data-placeholder="Seleccione" class="form-control" required="required">
@@ -257,22 +255,20 @@ $arr_datos = $obj->version_system();
 										<label>Hijos</label>
 										<input type="number" min=0 id="hijos" name="hijos" class="form-control" placeholder="0" />
 									</div>
+
 									<div class="form-group">
 										<label>Teléfono</label>
 										<input type="text" id="telefono" name="telefono" class="form-control" placeholder="15454562" maxlength=9 required="required">
 									</div>
-
 								</fieldset>
 							</div>
-
 							<div class="col-md-4">
-
 								<fieldset>
-
 									<div class="form-group">
 										<label>Email</label>
 										<input type="email" id="email" name="email" class="form-control" placeholder="hola@gmail.com" required="required" />
 									</div>
+
 									<div class="form-group">
 										<label>Instucción</label>
 										<select id="gi" name="gi" data-placeholder="Seleccione" class="select" required="required">
@@ -287,8 +283,6 @@ $arr_datos = $obj->version_system();
 										</select>
 									</div>
 
-
-
 									<div class="form-group">
 										<label>Sucursal</label>
 										<select id="suc" name="suc" data-placeholder="Seleccione" class="select" required="required">
@@ -302,6 +296,7 @@ $arr_datos = $obj->version_system();
 											?>
 										</select>
 									</div>
+
 									<div class="form-group">
 										<label>Horario</label>
 										<div class="multi-select-full">
@@ -330,10 +325,11 @@ $arr_datos = $obj->version_system();
 										</select>
 									</div>
 
-
 									<blockquote>
 										<label><i class="icon-user-lock position-left"></i> Acceso</label>
+
 										<hr>
+
 										<div class="form-group">
 											<label>Usuario</label>
 											<input type="text" id="user" name="user" placeholder="admin" class="form-control" maxlength=15 required="required">
@@ -362,8 +358,6 @@ $arr_datos = $obj->version_system();
 											</span>
 										</div>
 									</blockquote>
-
-
 								</fieldset>
 							</div>
 						</div>
