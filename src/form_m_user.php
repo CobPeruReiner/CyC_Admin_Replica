@@ -522,20 +522,28 @@ $arr_datos = $obj->version_system();
 		}
 
 		// PASSWORD HANDLER
-		function generatePassword() {
-			const alphanumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-			const specialCharacters = '!@#$%^&*()_+{}:"<>?|[];\',./`~';
-			let password = '';
+		function generatePassword(length = 10) {
+			const lower = "abcdefghijklmnopqrstuvwxyz";
+			const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+			const numbers = "0123456789";
+			const symbols = "!@#$%^&*()_+{}:<>?|[];',./`~";
 
-			for (let i = 0; i < 4; i++) {
-				password += alphanumeric.charAt(Math.floor(Math.random() * alphanumeric.length));
+			const all = lower + upper + numbers + symbols;
+
+			let password =
+				lower[Math.floor(Math.random() * lower.length)] +
+				upper[Math.floor(Math.random() * upper.length)] +
+				numbers[Math.floor(Math.random() * numbers.length)] +
+				symbols[Math.floor(Math.random() * symbols.length)];
+
+			for (let i = 4; i < length; i++) {
+				password += all[Math.floor(Math.random() * all.length)];
 			}
 
-			password += specialCharacters.charAt(Math.floor(Math.random() * specialCharacters.length));
-
-			password = password.split('').sort(() => 0.5 - Math.random()).join('');
-
-			return password;
+			return password
+				.split('')
+				.sort(() => 0.5 - Math.random())
+				.join('');
 		}
 
 		const password = document.getElementById('password')
