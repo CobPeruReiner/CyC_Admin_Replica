@@ -891,4 +891,106 @@ class clsUsuario
 
 		$objConx->desconectar();
 	}
+
+	public static function getByDocumento($doc)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+
+		$doc = mysql_real_escape_string($doc);
+
+		$sql = "
+			SELECT
+				A.IDPERSONAL as idpersonal,
+				CONCAT(A.nombres,' ',A.apellidos) as empleado,
+				A.usuario,
+				A.password,
+				A.EMAIL as email,
+				A.DOC as dni
+			FROM personal A
+			WHERE A.DOC = '$doc'
+			AND A.idestado = 1
+			AND A.TIPO_PERSONAL = 'HUMANO'
+			LIMIT 1
+		";
+
+		$res = mysql_query($sql);
+
+		if (!$res || mysql_num_rows($res) == 0) {
+			$objConx->desconectar();
+			return array();
+		}
+
+		$row = mysql_fetch_assoc($res);
+
+		unset($row['password']);
+
+		$objConx->desconectar();
+
+		return array($row);
+	}
+
+	public static function validarPassword($password)
+	{
+		return preg_match(
+			'/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/',
+			$password
+		);
+	}
+
+	public static function updatePasswordByDocumento($doc, $password)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+
+		$doc = mysql_real_escape_string($doc);
+
+		/* validar password */
+		if (!self::validarPassword($password)) {
+			$objConx->desconectar();
+			return array(
+				"ok" => false,
+				"mensaje" => "La contraseña debe tener mínimo 8 caracteres, incluir mayúscula, minúscula, número y símbolo"
+			);
+		}
+
+		$nuevoHash = password_hash($password, PASSWORD_BCRYPT);
+		$nuevoHash = mysql_real_escape_string($nuevoHash);
+
+		$sql = "
+		UPDATE personal
+		SET password = '$nuevoHash'
+		WHERE DOC = '$doc'
+		AND idestado = 1
+		AND TIPO_PERSONAL = 'HUMANO'
+		LIMIT 1
+	";
+
+		$res = mysql_query($sql);
+
+		if (!$res) {
+			error_log("MySQL Error updatePasswordByDocumento: " . mysql_error());
+			$objConx->desconectar();
+
+			return array(
+				"ok" => false,
+				"mensaje" => "Error al actualizar contraseña"
+			);
+		}
+
+		$afectadas = mysql_affected_rows();
+
+		$objConx->desconectar();
+
+		if ($afectadas <= 0) {
+			return array(
+				"ok" => false,
+				"mensaje" => "No se pudo actualizar la contraseña"
+			);
+		}
+
+		return array(
+			"ok" => true
+		);
+	}
 }

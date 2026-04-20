@@ -59,6 +59,7 @@
 							<label class="text-semibold"></label>
 						</div>
 
+						<!-- DNI -->
 						<div class="wrap-input100 validate-input m-b-10">
 							<input class="input100" type="text" name="username" id="username" placeholder="Username" required="required" maxlength=15 />
 							<span class="focus-input100"></span>
@@ -66,6 +67,8 @@
 								<i class="fa fa-user"></i>
 							</span>
 						</div>
+
+						<!-- PASSWORD -->
 						<div class="wrap-input100 validate-input m-b-10">
 							<input class="input100" type="password" name="password" id="password" placeholder="Password" required="required" />
 							<span class="focus-input100"></span>
@@ -74,21 +77,21 @@
 							</span>
 						</div>
 
+						<!-- CAPTCHA -->
 						<div class="wrap-input100 m-b-10" style="display:flex; justify-content:center;">
 							<div
 								class="g-recaptcha"
 								data-sitekey="6Lcs1swrAAAAAB3W0_EvXBASlyUw-wg_ElaRtrlY">
 							</div>
 						</div>
+
+						<!-- BOTON -->
 						<div class="container-login100-form-btn p-t-10">
-
-
 							<button type="submit" class="login100-form-btn" id="btn_ingresar" name="btn_ingresar">Login </button>
-
 						</div>
 					</form>
 					<div class="text-center w-full p-t-25 p-b-230">
-						<a href="#" class="txt1">
+						<a href="#" class="txt1" onclick="mostrarRecuperarDoc(); return false;">
 							Forgot Username / Password?
 						</a>
 					</div>
@@ -97,6 +100,58 @@
 							Create new account
 							<i class="fa fa-long-arrow-right"></i>
 						</a>
+					</div>
+				</div>
+
+				<!-- RECUPERAR: DNI -->
+				<div id="recover-doc-container" style="display:none">
+					<div class="wrap-input100 m-b-10">
+						<input class="input100" type="text" id="docRecovery" placeholder="Ingrese su DNI" maxlength="15">
+					</div>
+
+					<div class="container-login100-form-btn p-t-10">
+						<button type="button" onclick="volverLogin()" class="login100-form-btn" style="margin-bottom:10px;">
+							Volver
+						</button>
+						<button type="button" onclick="solicitarCodigo()" class="login100-form-btn">
+							Enviar código
+						</button>
+					</div>
+				</div>
+
+				<!-- RECUPERAR: CODIGO -->
+				<div id="recover-code-container" style="display:none">
+					<div class="wrap-input100 m-b-10">
+						<input class="input100" type="text" id="recoveryOtp" placeholder="Ingrese código">
+					</div>
+
+					<div class="container-login100-form-btn p-t-10">
+						<button type="button" onclick="volverRecoverDoc()" class="login100-form-btn" style="margin-bottom:10px;">
+							Volver
+						</button>
+						<button type="button" onclick="verificarCodigoRecovery()" class="login100-form-btn">
+							Verificar código
+						</button>
+					</div>
+				</div>
+
+				<!-- RECUPERAR: NUEVA PASSWORD -->
+				<div id="recover-password-container" style="display:none">
+					<div class="wrap-input100 m-b-10">
+						<input class="input100" type="password" id="newPassword" placeholder="Nueva contraseña">
+					</div>
+
+					<div class="wrap-input100 m-b-10">
+						<input class="input100" type="password" id="repeatPassword" placeholder="Repetir contraseña">
+					</div>
+
+					<div class="container-login100-form-btn p-t-10">
+						<button type="button" onclick="volverRecoverCode()" class="login100-form-btn" style="margin-bottom:10px;">
+							Volver
+						</button>
+						<button type="button" onclick="cambiarPassword()" class="login100-form-btn">
+							Actualizar contraseña
+						</button>
 					</div>
 				</div>
 
@@ -349,6 +404,184 @@
 					alert("Error de conexión con el servidor");
 				}
 
+			});
+		}
+
+		function mostrarMensaje(tipo, mensaje) {
+			$("#valido")
+				.removeClass()
+				.addClass("alert " + tipo)
+				.fadeIn()
+				.find("label")
+				.html(mensaje);
+		}
+
+		function ocultarTodo() {
+			$("#login-container").hide();
+			$("#otp-container").hide();
+			$("#recover-doc-container").hide();
+			$("#recover-code-container").hide();
+			$("#recover-password-container").hide();
+			$("#valido").hide();
+		}
+
+		function volverLogin() {
+			ocultarTodo();
+			$("#login-container").show();
+
+			sessionStorage.removeItem("recoveryDocTmp");
+			sessionStorage.removeItem("recoveryOtpVerified");
+
+			$("#docRecovery").val("");
+			$("#recoveryOtp").val("");
+			$("#newPassword").val("");
+			$("#repeatPassword").val("");
+		}
+
+		function mostrarRecuperarDoc() {
+			ocultarTodo();
+			$("#recover-doc-container").show();
+		}
+
+		function volverRecoverDoc() {
+			ocultarTodo();
+			$("#recover-doc-container").show();
+			$("#recoveryOtp").val("");
+		}
+
+		function volverRecoverCode() {
+			ocultarTodo();
+			$("#recover-code-container").show();
+			$("#newPassword").val("");
+			$("#repeatPassword").val("");
+		}
+
+		function solicitarCodigo() {
+			var doc = $.trim($("#docRecovery").val());
+
+			if (!doc) {
+				mostrarMensaje("alert-danger", "Ingrese su DNI");
+				return;
+			}
+
+			$.ajax({
+				type: "POST",
+				url: "ajax/ajax_password_request.php",
+				dataType: "json",
+				data: {
+					doc: doc
+				},
+				success: function(response) {
+					if (response.codigo == 1) {
+						sessionStorage.setItem("recoveryDocTmp", doc);
+						ocultarTodo();
+						$("#recover-code-container").show();
+						mostrarMensaje("alert-success", response.mensaje || "Se envió un código a su correo");
+						return;
+					}
+
+					mostrarMensaje("alert-danger", response.mensaje || "No se pudo enviar el código");
+				},
+				error: function() {
+					mostrarMensaje("alert-danger", "Error de conexión con el servidor");
+				}
+			});
+		}
+
+		function verificarCodigoRecovery() {
+			var doc = sessionStorage.getItem("recoveryDocTmp");
+			var otp = $.trim($("#recoveryOtp").val());
+
+			if (!doc) {
+				mostrarMensaje("alert-danger", "La sesión de recuperación expiró");
+				ocultarTodo();
+				$("#recover-doc-container").show();
+				return;
+			}
+
+			if (!otp) {
+				mostrarMensaje("alert-danger", "Ingrese el código");
+				return;
+			}
+
+			$.ajax({
+				type: "POST",
+				url: "ajax/ajax_password_verify.php",
+				dataType: "json",
+				data: {
+					doc: doc,
+					otp: otp
+				},
+				success: function(response) {
+					if (response.codigo == 1) {
+						sessionStorage.setItem("recoveryOtpVerified", "true");
+						ocultarTodo();
+						$("#recover-password-container").show();
+						mostrarMensaje("alert-success", response.mensaje || "Código verificado");
+						return;
+					}
+
+					mostrarMensaje("alert-danger", response.mensaje || "Código inválido o expirado");
+				},
+				error: function() {
+					mostrarMensaje("alert-danger", "Error de conexión con el servidor");
+				}
+			});
+		}
+
+		function cambiarPassword() {
+			var doc = sessionStorage.getItem("recoveryDocTmp");
+			var otpVerified = sessionStorage.getItem("recoveryOtpVerified");
+			var newPassword = $("#newPassword").val();
+			var repeatPassword = $("#repeatPassword").val();
+
+			if (!doc || otpVerified !== "true") {
+				mostrarMensaje("alert-danger", "La sesión de recuperación expiró");
+				ocultarTodo();
+				$("#recover-doc-container").show();
+				return;
+			}
+
+			if (!newPassword || !repeatPassword) {
+				mostrarMensaje("alert-danger", "Complete ambos campos");
+				return;
+			}
+
+			if (newPassword !== repeatPassword) {
+				mostrarMensaje("alert-danger", "Las contraseñas no coinciden");
+				return;
+			}
+
+			$.ajax({
+				type: "POST",
+				url: "ajax/ajax_password_reset.php",
+				dataType: "json",
+				data: {
+					doc: doc,
+					password: newPassword
+				},
+				success: function(response) {
+					if (response.codigo == 1) {
+						sessionStorage.removeItem("recoveryDocTmp");
+						sessionStorage.removeItem("recoveryOtpVerified");
+
+						$("#docRecovery").val("");
+						$("#recoveryOtp").val("");
+						$("#newPassword").val("");
+						$("#repeatPassword").val("");
+
+						ocultarTodo();
+						$("#login-container").show();
+
+						mostrarMensaje("alert-success", response.mensaje || "Contraseña actualizada correctamente");
+						return;
+					}
+
+					mostrarMensaje("alert-danger", response.mensaje || "No se pudo actualizar la contraseña");
+				},
+				error: function() {
+					mostrarMensaje("alert-danger", "Error de conexión con el servidor");
+				}
 			});
 		}
 	</script>
