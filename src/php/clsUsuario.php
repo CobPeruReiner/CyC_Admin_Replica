@@ -479,7 +479,7 @@ class clsUsuario
         FROM HISTORIAL_CAMBIOS_CONTRASENA 
         WHERE ID_USUARIO = $id
         ORDER BY ID_HIST_CAMBIO_CONTRASENA DESC
-        LIMIT 24
+        LIMIT 10
     ";
 
 		$res = mysql_query($sql) or die(mysql_error());

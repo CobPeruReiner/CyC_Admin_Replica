@@ -107,7 +107,7 @@ if ($password !== '') {
 
 	if ($yaUsada === true) {
 		$responce->codigo  = 10;
-		$responce->mensaje = 'No puede reutilizar ninguna de sus últimas 24 contraseñas';
+		$responce->mensaje = 'No puede reutilizar ninguna de sus últimas 10 contraseñas';
 		echo json_encode($responce);
 		exit;
 	}
