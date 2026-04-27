@@ -23,8 +23,8 @@ class clsMailer
       $mail->isSMTP();
       $mail->Host = "cobranzasperu.com";
       $mail->SMTPAuth = true;
-      $mail->Username = "asistencia@cobranzasperu.com";
-      $mail->Password = "6#2(Osd04f8+";
+      $mail->Username = "notificaciones@cobranzasperu.com";
+      $mail->Password = "yN?-^%D*5Yu!";
 
       $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
       $mail->Port = 465;
@@ -32,7 +32,7 @@ class clsMailer
       $mail->CharSet = "UTF-8";
 
       $mail->setFrom(
-        "asistencia@cobranzasperu.com",
+        "notificaciones@cobranzasperu.com",
         "Cobranzas Perú"
       );
 
@@ -75,6 +75,72 @@ class clsMailer
 
       error_log("MAIL EXCEPTION: " . $e->getMessage());
 
+      return false;
+    }
+  }
+
+  public static function enviarCodigoRecuperacion($correo, $nombre, $codigo)
+  {
+    $mail = new PHPMailer(true);
+
+    try {
+
+      $mail->SMTPDebug = 2;
+      $mail->Debugoutput = function ($str, $level) {
+        error_log("SMTP DEBUG [$level]: $str");
+      };
+
+      $mail->isSMTP();
+      $mail->Host = "cobranzasperu.com";
+      $mail->SMTPAuth = true;
+      $mail->Username = "notificaciones@cobranzasperu.com";
+      $mail->Password = "yN?-^%D*5Yu!";
+
+      $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+      $mail->Port = 465;
+
+      $mail->CharSet = "UTF-8";
+
+      $mail->setFrom(
+        "notificaciones@cobranzasperu.com",
+        "Cobranzas Perú"
+      );
+
+      if (empty($correo)) {
+        throw new Exception("Correo destino vacío");
+      }
+
+      $mail->addAddress($correo);
+
+      $mail->isHTML(true);
+
+      $mail->Subject = "Recuperación de contraseña - Cobranzas Perú";
+
+      $mail->Body = "
+        Hola {$nombre},<br><br>
+        Tu código para recuperar tu contraseña en CYC WEB ADMIN es:<br><br>
+        <div style='
+          font-size:24px;
+          font-weight:bold;
+          color:#860404;
+          letter-spacing:3px;
+        '>
+          {$codigo}
+        </div>
+        <br>
+        Este código vence en 10 minutos.
+      ";
+
+      if (!$mail->send()) {
+        error_log("MAIL ERROR: " . $mail->ErrorInfo);
+        return false;
+      }
+
+      error_log("MAIL OK RECOVERY: enviado a " . $correo);
+
+      return true;
+    } catch (Exception $e) {
+      error_log("MAIL EXCEPTION RECOVERY: " . $e->getMessage());
       return false;
     }
   }

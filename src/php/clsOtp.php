@@ -54,4 +54,50 @@ class clsOtp
 
     return true;
   }
+
+  public static function guardarRecovery($doc, $otp)
+  {
+    if (session_status() === PHP_SESSION_NONE)
+      session_start();
+
+    $_SESSION["otp_recovery_by_doc"][$doc] = array(
+      "hash" => hash("sha256", $otp),
+      "expires" => time() + self::TTL,
+      "attempts" => 0
+    );
+  }
+
+  public static function verificarRecovery($doc, $otp)
+  {
+    if (session_status() === PHP_SESSION_NONE)
+      session_start();
+
+    if (!isset($_SESSION["otp_recovery_by_doc"][$doc]))
+      return false;
+
+    $data = $_SESSION["otp_recovery_by_doc"][$doc];
+
+    if (time() > $data["expires"]) {
+      unset($_SESSION["otp_recovery_by_doc"][$doc]);
+      return false;
+    }
+
+    $data["attempts"]++;
+
+    if ($data["attempts"] > self::MAX_ATTEMPTS) {
+      unset($_SESSION["otp_recovery_by_doc"][$doc]);
+      return false;
+    }
+
+    $hash = hash("sha256", $otp);
+
+    if ($hash !== $data["hash"]) {
+      $_SESSION["otp_recovery_by_doc"][$doc] = $data;
+      return false;
+    }
+
+    unset($_SESSION["otp_recovery_by_doc"][$doc]);
+
+    return true;
+  }
 }
