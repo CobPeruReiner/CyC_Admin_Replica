@@ -2078,6 +2078,7 @@ function registrar(
   fechaing,
 ) {
   $.ajax({
+    type: "POST",
     data: {
       apellidos: apellidos,
       nombre: nombre,

@@ -117,16 +117,30 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT idsucursal as id,concat(sucursal,' | ',distrito) as nombre FROM sucursal order by idsucursal";
-		$res = mysql_query($sql) or die(mysql_error());
+
+		$sql = "SELECT
+        tb1.IDSUCURSAL as id,
+        CONCAT(tb1.SUCURSAL,' | ',tb1.DISTRITO) as nombre
+        FROM sucursal tb1
+        WHERE tb1.IDESTADO = 1
+        ORDER BY tb1.IDSUCURSAL";
+
+		$res = mysql_query($sql);
+
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array("id" => $row["id"], "nombre" => utf8_encode($row["nombre"]));
+
+		if ($res) {
+			while ($row = mysql_fetch_array($res)) {
+				$arr_datos[] = array(
+					"id" => $row["id"],
+					"nombre" => $row["nombre"]
+				);
+			}
 		}
+
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+
+		return $arr_datos;
 	}
 
 	public static function consulta_horario()
