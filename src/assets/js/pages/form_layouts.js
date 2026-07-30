@@ -1,3 +1,50 @@
+function obtenerFechaSqlUsuario(selector) {
+  var $campo = jQuery(selector);
+  var valor = jQuery.trim($campo.val() || "");
+
+  if (valor === "") {
+    return "";
+  }
+
+  try {
+    var picker = $campo.pickadate("picker");
+    if (picker && typeof picker.get === "function") {
+      var fechaSeleccionada = picker.get("select", "yyyy-mm-dd");
+      if (fechaSeleccionada) {
+        return fechaSeleccionada;
+      }
+    }
+  } catch (error) {
+    // El campo puede no estar inicializado todavía. Se usa el valor escrito.
+  }
+
+  var coincidenciaSql = valor.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (coincidenciaSql) {
+    return (
+      coincidenciaSql[1] +
+      "-" +
+      ("0" + coincidenciaSql[2]).slice(-2) +
+      "-" +
+      ("0" + coincidenciaSql[3]).slice(-2)
+    );
+  }
+
+  var coincidenciaLatina = valor.match(
+    /^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/,
+  );
+  if (coincidenciaLatina) {
+    return (
+      coincidenciaLatina[3] +
+      "-" +
+      ("0" + coincidenciaLatina[2]).slice(-2) +
+      "-" +
+      ("0" + coincidenciaLatina[1]).slice(-2)
+    );
+  }
+
+  return valor;
+}
+
 $(function () {
   // Basic
   $(".select").select2();
@@ -184,7 +231,7 @@ $(function () {
       var nombre = jQuery("#nombre").val();
       var dni = jQuery("#dni").val();
       var sexo = jQuery("#sexo").val();
-      var fechanac = jQuery("#fechanac").val();
+      var fechanac = obtenerFechaSqlUsuario("#fechanac");
       var ec = jQuery("#ec").val();
       var cargo = jQuery("#cargo").val();
       var direccion = jQuery("#direccion").val();
@@ -198,7 +245,7 @@ $(function () {
       var telefono = jQuery("#telefono").val();
       var movil = jQuery("#movil").val();
 
-      var fechaing = jQuery("#fechaing").val();
+      var fechaing = obtenerFechaSqlUsuario("#fechaing");
 
       var email = jQuery("#email").val();
       var suc = jQuery("#suc").val();
@@ -1134,7 +1181,7 @@ $(function () {
       var nombre = jQuery("#nombre").val();
       var dni = jQuery("#dni").val();
       var sexo = jQuery("#sexo").val();
-      var fechanac = jQuery("#fechanac").val();
+      var fechanac = obtenerFechaSqlUsuario("#fechanac");
       var ec = jQuery("#ec").val();
       var cargo = jQuery("#cargo").val();
       var direccion = jQuery("#direccion").val();
@@ -1156,8 +1203,8 @@ $(function () {
       var arr_items = $(".multiselect").val();
       var refrigerio = jQuery("#refrigerio").val();
 
-      var fechaing = jQuery("#fechaing").val();
-      var fechabaja = jQuery("#fechabaja").val();
+      var fechaing = obtenerFechaSqlUsuario("#fechaing");
+      var fechabaja = obtenerFechaSqlUsuario("#fechabaja");
 
       var estado = $("#estado").is(":checked");
       var cartera = jQuery("#cartera").val();

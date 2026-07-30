@@ -31,10 +31,88 @@ function es_utf8_valido_registro($valor)
 	return preg_match('//u', $valor) === 1;
 }
 
-function fecha_valida_registro($fecha)
+function normalizar_fecha_registro($fecha)
 {
-	$objFecha = DateTime::createFromFormat('Y-m-d', $fecha);
-	return $objFecha && $objFecha->format('Y-m-d') === $fecha;
+	$fecha = trim((string)$fecha);
+	if ($fecha === '') {
+		return false;
+	}
+
+	if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T].*)?$/', $fecha, $m)) {
+		$anio = (int)$m[1];
+		$mes = (int)$m[2];
+		$dia = (int)$m[3];
+		return checkdate($mes, $dia, $anio) ? sprintf('%04d-%02d-%02d', $anio, $mes, $dia) : false;
+	}
+
+	if (preg_match('/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})(?:\s.*)?$/', $fecha, $m)) {
+		$dia = (int)$m[1];
+		$mes = (int)$m[2];
+		$anio = (int)$m[3];
+		return checkdate($mes, $dia, $anio) ? sprintf('%04d-%02d-%02d', $anio, $mes, $dia) : false;
+	}
+
+	$fechaTexto = preg_replace('/\s+/', ' ', str_replace(',', ' ', $fecha));
+	$fechaTexto = trim($fechaTexto);
+	$meses = array(
+		'enero' => 1,
+		'january' => 1,
+		'jan' => 1,
+		'febrero' => 2,
+		'february' => 2,
+		'feb' => 2,
+		'marzo' => 3,
+		'march' => 3,
+		'mar' => 3,
+		'abril' => 4,
+		'april' => 4,
+		'apr' => 4,
+		'mayo' => 5,
+		'may' => 5,
+		'junio' => 6,
+		'june' => 6,
+		'jun' => 6,
+		'julio' => 7,
+		'july' => 7,
+		'jul' => 7,
+		'agosto' => 8,
+		'august' => 8,
+		'aug' => 8,
+		'septiembre' => 9,
+		'setiembre' => 9,
+		'september' => 9,
+		'sep' => 9,
+		'sept' => 9,
+		'octubre' => 10,
+		'october' => 10,
+		'oct' => 10,
+		'noviembre' => 11,
+		'november' => 11,
+		'nov' => 11,
+		'diciembre' => 12,
+		'december' => 12,
+		'dec' => 12
+	);
+
+	if (preg_match('/^(\d{1,2})\s+([[:alpha:]áéíóúñü\.]+)\s+(\d{4})$/iu', $fechaTexto, $m)) {
+		$dia = (int)$m[1];
+		$nombreMes = strtolower(rtrim($m[2], '.'));
+		$anio = (int)$m[3];
+		if (isset($meses[$nombreMes]) && checkdate($meses[$nombreMes], $dia, $anio)) {
+			return sprintf('%04d-%02d-%02d', $anio, $meses[$nombreMes], $dia);
+		}
+	}
+
+	if (preg_match('/^([[:alpha:]áéíóúñü\.]+)\s+(\d{1,2})\s+(\d{4})$/iu', $fechaTexto, $m)) {
+		$nombreMes = strtolower(rtrim($m[1], '.'));
+		$dia = (int)$m[2];
+		$anio = (int)$m[3];
+		if (isset($meses[$nombreMes]) && checkdate($meses[$nombreMes], $dia, $anio)) {
+			return sprintf('%04d-%02d-%02d', $anio, $meses[$nombreMes], $dia);
+		}
+	}
+
+	return false;
 }
 
 function password_segura_registro($password)
@@ -131,9 +209,19 @@ foreach ($textosUtf8 as $nombreCampo => $valorCampo) {
 	}
 }
 
-if (!fecha_valida_registro($fechaNacimiento) || !fecha_valida_registro($fechaIngreso)) {
-	responder_registro(9, 'Las fechas deben usar el formato YYYY-MM-DD');
+$fechaNacimientoNormalizada = normalizar_fecha_registro($fechaNacimiento);
+if ($fechaNacimientoNormalizada === false) {
+	error_log('Fecha de nacimiento inválida en registro: ' . json_encode($fechaNacimiento));
+	responder_registro(9, 'La fecha de nacimiento no es válida. Use DD/MM/YYYY o YYYY-MM-DD');
 }
+$fechaNacimiento = $fechaNacimientoNormalizada;
+
+$fechaIngresoNormalizada = normalizar_fecha_registro($fechaIngreso);
+if ($fechaIngresoNormalizada === false) {
+	error_log('Fecha de ingreso inválida en registro: ' . json_encode($fechaIngreso));
+	responder_registro(9, 'La fecha de ingreso no es válida. Use DD/MM/YYYY o YYYY-MM-DD');
+}
+$fechaIngreso = $fechaIngresoNormalizada;
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 	responder_registro(9, 'Email inválido');

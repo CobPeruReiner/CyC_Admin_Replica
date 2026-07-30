@@ -10,6 +10,18 @@ function h_usuario($valor)
 	return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
 }
 
+function fecha_formulario_usuario($valor)
+{
+	$valor = trim((string)$valor);
+	if ($valor === '' || substr($valor, 0, 10) === '0000-00-00') {
+		return '';
+	}
+	if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $valor, $m)) {
+		return $m[1];
+	}
+	return $valor;
+}
+
 if (!isset($_SESSION['user_ls'])) {
 	header("Location: index.php");
 	exit;
@@ -195,7 +207,7 @@ $arr_datos = $obj->version_system();
 										<label>Fecha Nacimiento</label>
 										<div class="input-group">
 											<span class="input-group-addon"><i class="icon-calendar22"></i></span>
-											<input type="text" id="fechanac" name="fechanac" class="form-control pickadate" placeholder="1991-02-03" value="<?php echo h_usuario(isset($objUsuario['FECHANAC']) ? $objUsuario['FECHANAC'] : ''); ?>" />
+											<input type="text" id="fechanac" name="fechanac" class="form-control pickadate" placeholder="1991-02-03" value="<?php echo h_usuario(fecha_formulario_usuario(isset($objUsuario['FECHANAC']) ? $objUsuario['FECHANAC'] : '')); ?>" />
 										</div>
 									</div>
 
@@ -247,7 +259,7 @@ $arr_datos = $obj->version_system();
 										<label>Fecha Ingreso</label>
 										<div class="input-group">
 											<span class="input-group-addon"><i class="icon-calendar22"></i></span>
-											<input type="text" id="fechaing" name="fechaing" class="form-control pickadate" value="<?php echo h_usuario(isset($objUsuario['fecha_ing']) ? $objUsuario['fecha_ing'] : ''); ?>" placeholder="1991-02-03" />
+											<input type="text" id="fechaing" name="fechaing" class="form-control pickadate" value="<?php echo h_usuario(fecha_formulario_usuario(isset($objUsuario['fecha_ing']) ? $objUsuario['fecha_ing'] : '')); ?>" placeholder="1991-02-03" />
 										</div>
 									</div>
 								</fieldset>
@@ -258,7 +270,7 @@ $arr_datos = $obj->version_system();
 									<label>Fecha Cese</label>
 									<div class="input-group">
 										<span class="input-group-addon"><i class="icon-calendar22"></i></span>
-										<input type="text" id="fechabaja" name="fechabaja" class="form-control pickadate" value="<?php echo h_usuario(isset($objUsuario['fecha_baja']) ? $objUsuario['fecha_baja'] : ''); ?>" placeholder="1991-02-03" />
+										<input type="text" id="fechabaja" name="fechabaja" class="form-control pickadate" value="<?php echo h_usuario(fecha_formulario_usuario(isset($objUsuario['fecha_baja']) ? $objUsuario['fecha_baja'] : '')); ?>" placeholder="1991-02-03" />
 									</div>
 								</div>
 
