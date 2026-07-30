@@ -454,7 +454,7 @@ class clsUsuario
 		}
 
 		foreach ($horariosUnicos as $idHorario) {
-			if (!mysql_query("INSERT INTO horario_personal VALUES (DEFAULT, $idHorario, $id)")) {
+			if (!mysql_query("INSERT INTO horario_personal (idhorario, idpersonal) VALUES ($idHorario, $id)")) {
 				self::registrar_error_mysql('registrar_empleado: horario');
 				mysql_query('ROLLBACK');
 				$objConx->desconectar();
@@ -497,7 +497,7 @@ class clsUsuario
 			return false;
 		}
 
-		$res = mysql_query("INSERT INTO horario_personal VALUES (DEFAULT, $id_horario, $id)");
+		$res = mysql_query("INSERT INTO horario_personal (idhorario, idpersonal) VALUES ($id_horario, $id)");
 		if (!$res) {
 			self::registrar_error_mysql('registrar_item');
 			$objConx->desconectar();
@@ -1181,7 +1181,7 @@ class clsUsuario
 			}
 
 			foreach ($horariosUnicos as $idHorario) {
-				if (!mysql_query("INSERT INTO horario_personal VALUES (DEFAULT, $idHorario, $id)")) {
+				if (!mysql_query("INSERT INTO horario_personal (idhorario, idpersonal) VALUES ($idHorario, $id)")) {
 					self::registrar_error_mysql('update_empleado: insertar horario');
 					mysql_query('ROLLBACK');
 					$objConx->desconectar();
