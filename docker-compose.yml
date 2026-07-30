@@ -1,31 +1,50 @@
 services:
-  cyc_admin_67_app_replica:
+  cyc_admin_app_replica:
     image: cobperureiner2/cyc_admin_67_app_replica:${VERSION}
+
     ports:
       - target: 80
         published: 5003
         protocol: tcp
         mode: ingress
+
     secrets:
-      - db_host
-      - db_user
-      - db_password
-      - db_name
+      - source: cyc_admin_db_host_20260730
+        target: db_host
+
+      - source: cyc_admin_db_user_20260730
+        target: db_user
+
+      - source: cyc_admin_db_password_20260730
+        target: db_password
+
+      - source: cyc_admin_db_name_20260730
+        target: db_name
+
     deploy:
       replicas: 1
+
       restart_policy:
         condition: any
+
       update_config:
         order: start-first
         parallelism: 1
         delay: 2s
 
+      rollback_config:
+        order: stop-first
+        parallelism: 1
+
 secrets:
-  db_host:
+  cyc_admin_db_host_20260730:
     external: true
-  db_user:
+
+  cyc_admin_db_user_20260730:
     external: true
-  db_password:
+
+  cyc_admin_db_password_20260730:
     external: true
-  db_name:
+
+  cyc_admin_db_name_20260730:
     external: true

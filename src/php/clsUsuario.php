@@ -193,7 +193,6 @@ class clsUsuario
 
 		$fecha = date("Y-m-d H:i:s");
 
-		// escapar
 		$APELLIDOS  = mysql_real_escape_string($APELLIDOS);
 		$NOMBRES    = mysql_real_escape_string($NOMBRES);
 		$FECHANAC   = mysql_real_escape_string($FECHANAC);
@@ -347,7 +346,6 @@ class clsUsuario
 		$loginCorrecto = false;
 
 		if (!empty($hash)) {
-			// bcrypt
 			if ($hash[0] === '$') {
 				if (password_verify($pass, $hash)) {
 					$loginCorrecto = true;
@@ -361,11 +359,9 @@ class clsUsuario
 					}
 				}
 			} else {
-				// MD5 legacy
 				if (md5($pass) === $hash) {
 					$loginCorrecto = true;
 
-					// migrar a bcrypt automáticamente
 					$nuevoHash = password_hash($pass, PASSWORD_BCRYPT);
 
 					$id = (int)$row['idpersonal'];
@@ -504,15 +500,12 @@ class clsUsuario
 
 			if (!empty($hash)) {
 
-				// bcrypt
 				if ($hash[0] === '$') {
 					if (password_verify($passwordPlano, $hash)) {
 						$objConx->desconectar();
 						return true;
 					}
-				}
-				// MD5 legacy
-				else {
+				} else {
 					if (md5($passwordPlano) === $hash) {
 						$objConx->desconectar();
 						return true;
@@ -591,19 +584,8 @@ class clsUsuario
 					order by 2 asc
 		";
 
-		// $sql = "SELECT CONCAT(YEAR(fecha_registro),'-', LPAD(b.idpersonal,5,'0') ) as idpersonal,concat(nombres,' ',apellidos) as empleado,FECHANAC, if(SEXO=1,'M','F') as sexo ,b.DOC as dni, d.nombre as ESTCIV,CARFAM,NUMHIJ,b.DIRECCION,b.DISTRITO,b.DPTO,b.REFDIR,b.TLF,b.CEL,b.EMAIL,e.nombre as GRADOINS,c.nombre as CARGO,
-		//     f.SUCURSAL as sucursal,usuario as user,fecha_registro,
-		//     if(b.IDESTADO=1,'<label>ACTIVE</label>','<label>SUSPENDED</label>') as estado
-		//     FROM personal b 
-		//     left join cargo c on c.id=b.CARGO
-		//     left join estado_civil d on d.id=b.ESTCIV
-		//     left join grado_ins e on e.id=b.GRADOINS
-		//     left join sucursal f on f.IDSUCURSAL=b.IDSUCURSAL
-		//     order by b.IDPERSONAL desc
-		// ";
-
 		$res = mysql_query($sql) or die(mysql_error());
-		//echo($sql);
+
 		$arr_datos = array();
 		while ($row = mysql_fetch_array($res)) {
 			$arr_datos[] = array(utf8_encode($row["idpersonal"]), utf8_encode($row["empleado"]), utf8_encode($row["FECHANAC"]), utf8_encode($row["sexo"]), utf8_encode($row["dni"]), utf8_encode($row["ESTCIV"]), utf8_encode($row["CARFAM"]), utf8_encode($row["NUMHIJ"]), utf8_encode($row["DIRECCION"]), utf8_encode($row["DISTRITO"]), utf8_encode($row["DPTO"]), utf8_encode($row["REFDIR"]), utf8_encode($row["TLF"]), utf8_encode($row["CEL"]), utf8_encode($row["EMAIL"]), utf8_encode($row["GRADOINS"]), utf8_encode($row["CARGO"]), utf8_encode($row["sucursal"]), utf8_encode($row["user"]), utf8_encode($row["fecha_registro"]), utf8_encode($row["estado"]), utf8_encode($row["cartera"]));
@@ -839,7 +821,6 @@ class clsUsuario
 			return 0;
 		}
 
-		// obtener nuevo valor
 		$sql2 = "
         SELECT INTENTOS_CYCWEB_ADMIN
         FROM personal
