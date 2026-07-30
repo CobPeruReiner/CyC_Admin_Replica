@@ -1,5 +1,5 @@
 services:
-  cyc_admin_app_replica:
+  app_replica:
     image: cobperureiner2/cyc_admin_67_app_replica:${VERSION}
 
     ports:
@@ -9,16 +9,16 @@ services:
         mode: ingress
 
     secrets:
-      - source: cyc_admin_db_host_20260730
+      - source: db_host
         target: db_host
 
-      - source: cyc_admin_db_user_20260730
+      - source: db_user
         target: db_user
 
-      - source: cyc_admin_db_password_20260730
+      - source: db_password
         target: db_password
 
-      - source: cyc_admin_db_name_20260730
+      - source: db_name
         target: db_name
 
     deploy:
@@ -37,14 +37,14 @@ services:
         parallelism: 1
 
 secrets:
-  cyc_admin_db_host_20260730:
+  db_host:
     external: true
 
-  cyc_admin_db_user_20260730:
+  db_user:
     external: true
 
-  cyc_admin_db_password_20260730:
+  db_password:
     external: true
 
-  cyc_admin_db_name_20260730:
+  db_name:
     external: true
