@@ -1,21 +1,29 @@
 <?php
+header('Content-Type: text/html; charset=utf-8');
+
+function h_usuario($valor)
+{
+	return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+}
+
 require_once("php/clsUsuario.php");
 require_once("php/clsTable.php");
 session_start();
 if (!isset($_SESSION['user_ls'])) {
 	header("Location: index.php");
+	exit;
 }
 $obj = new clsUsuario;
 $arr_datos = $obj->version_system();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title><?php echo ($arr_datos[0][1]); ?></title>
+	<title><?php echo h_usuario($arr_datos[0][1]); ?></title>
 	<!-- Global stylesheets -->
 	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
 	<link href="assets/css/icons/icomoon/styles.css" rel="stylesheet" type="text/css">
@@ -110,7 +118,7 @@ $arr_datos = $obj->version_system();
 
 		<!-- Content area -->
 		<div class="content">
-			<form action="#" class="form-user">
+			<form action="#" class="form-user" method="post" accept-charset="UTF-8">
 				<div class="panel panel-flat">
 					<div class="panel-heading">
 
@@ -164,7 +172,7 @@ $arr_datos = $obj->version_system();
 											$obj = new clsUsuario;
 											$arr_datos = $obj->consulta_ec();
 											foreach ($arr_datos as $datos)
-												echo '<option value="' . $datos['id'] . '">' . $datos['nombre'] . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
 									</div>
@@ -183,7 +191,7 @@ $arr_datos = $obj->version_system();
 											$obj = new clsUsuario;
 											$arr_datos = $obj->consulta_tipo();
 											foreach ($arr_datos as $datos)
-												echo '<option value="' . $datos['id'] . '">' . $datos['nombre'] . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
 									</div>
@@ -218,7 +226,7 @@ $arr_datos = $obj->version_system();
 											$obj = new clsSucursal;
 											$arr_datos = $obj->departamentos();
 											foreach ($arr_datos as $datos)
-												echo '<option value="' . $datos['id'] . '">' . $datos['nombre'] . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
 									</div>
@@ -278,7 +286,7 @@ $arr_datos = $obj->version_system();
 											$obj = new clsUsuario;
 											$arr_datos = $obj->consulta_gi();
 											foreach ($arr_datos as $datos)
-												echo '<option value="' . $datos['id'] . '">' . $datos['nombre'] . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
 									</div>
@@ -292,7 +300,7 @@ $arr_datos = $obj->version_system();
 											$obj = new clsUsuario;
 											$arr_datos = $obj->consulta_sucursal();
 											foreach ($arr_datos as $datos)
-												echo '<option value="' . $datos['id'] . '">' . $datos['nombre'] . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
 									</div>
@@ -306,10 +314,25 @@ $arr_datos = $obj->version_system();
 												$obj = new clsUsuario;
 												$arr_datos = $obj->consulta_horario();
 												foreach ($arr_datos as $datos)
-													echo '<option value="' . $datos['id'] . '">' . $datos['nombre'] . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												?>
 											</select>
 										</div>
+									</div>
+
+									<div class="form-group">
+										<label>Hora de almuerzo</label>
+										<select id="refrigerio" name="refrigerio" data-placeholder="Seleccione" class="select" required="required">
+											<option value=""></option>
+											<?php
+											$obj = new clsUsuario;
+											$arr_datos = $obj->consulta_refrigerio();
+											foreach ($arr_datos as $datos) {
+												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
+											}
+											?>
+										</select>
+										<span class="help-block text-info"><i class="icon-help position-right"></i> Campo obligatorio. Se guarda en personal_refrigerio.</span>
 									</div>
 
 									<div class="form-group">
@@ -320,7 +343,7 @@ $arr_datos = $obj->version_system();
 											$obj = new clsTable;
 											$arr_datos = $obj->carteras();
 											foreach ($arr_datos as $datos)
-												echo '<option value="' . $datos['id'] . '">' . $datos['nombre'] . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
 									</div>
@@ -349,6 +372,7 @@ $arr_datos = $obj->version_system();
 													placeholder="**********"
 													maxlength="20"
 													required="required"
+													autocomplete="new-password"
 													pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$">
 												<i class="icon-eye8 toggle-password" id='toggle-password'></i>
 											</div>

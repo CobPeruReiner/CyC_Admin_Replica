@@ -85,7 +85,7 @@ $(function () {
         minlength: 8,
       },
       password: {
-        minlength: 5,
+        minlength: 8,
       },
       minimum_characters: {
         minlength: 10,
@@ -207,6 +207,7 @@ $(function () {
       var cartera = jQuery("#cartera").val();
       var password = jQuery("#password").val();
       var arr_items = $(".multiselect").val();
+      var refrigerio = jQuery("#refrigerio").val();
 
       bootbox.confirm("¿Desea registrar usuario?", function (result) {
         if (result) {
@@ -229,6 +230,7 @@ $(function () {
             email,
             suc,
             arr_items,
+            refrigerio,
             user,
             password,
             gi,
@@ -1125,10 +1127,7 @@ $(function () {
 
   $(".form-m-user").on("submit", function (e) {
     e.preventDefault();
-    console.log(e);
-
     var fechabaja2 = jQuery("#fechabaja").val();
-    console.log(fechabaja2);
 
     if (e.result === true) {
       var apellidos = jQuery("#apellidos").val();
@@ -1155,6 +1154,7 @@ $(function () {
       var gi = jQuery("#gi").val();
       var password = jQuery("#password").val();
       var arr_items = $(".multiselect").val();
+      var refrigerio = jQuery("#refrigerio").val();
 
       var fechaing = jQuery("#fechaing").val();
       var fechabaja = jQuery("#fechabaja").val();
@@ -1169,7 +1169,6 @@ $(function () {
       }
 
       var id = jQuery("#id_user").val();
-      console.log(id);
 
       bootbox.confirm("¿Desea modificar usuario?", function (result) {
         if (result) {
@@ -1194,6 +1193,7 @@ $(function () {
             email,
             suc,
             arr_items,
+            refrigerio,
             user,
             password,
             gi,
@@ -2071,6 +2071,7 @@ function registrar(
   email,
   suc,
   arr_items,
+  refrigerio,
   user,
   password,
   gi,
@@ -2098,6 +2099,7 @@ function registrar(
       email: email,
       suc: suc,
       arr_items: arr_items,
+      refrigerio: refrigerio,
       user: user,
       password: password,
       gi: gi,
@@ -2107,7 +2109,6 @@ function registrar(
     dataType: "json",
     url: "ajax/ajax_registrar_user.php",
     success: function (response) {
-      console.log(response);
       if (response.codigo == 1) {
         window.location = "datatable_basic.php";
       } else if (response.codigo >= 2) {
@@ -2131,6 +2132,13 @@ function registrar(
           },
         });
       }
+    },
+    error: function () {
+      swal({
+        title: "Mensaje del Sistema",
+        text: "No se pudo procesar la solicitud. Revise el registro de errores del servidor.",
+        type: "error",
+      });
     },
   });
 }
@@ -3003,6 +3011,7 @@ function modificar(
   email,
   suc,
   arr_items,
+  refrigerio,
   user,
   password,
   gi,
@@ -3010,68 +3019,40 @@ function modificar(
   fechaing,
   fechabaja,
 ) {
-  console.log({
-    id: id,
-    estado: estado,
-    apellidos: apellidos,
-    nombre: nombre,
-    dni: dni,
-    sexo: sexo,
-    fechanac: fechanac,
-    ec: ec,
-    cargo: cargo,
-    direccion: direccion,
-    departamento: departamento,
-    distrito: distrito,
-    referencia: referencia,
-    fam: fam,
-    hijos: hijos,
-    telefono: telefono,
-    movil: movil,
-    email: email,
-    suc: suc,
-    arr_items: arr_items,
-    user: user,
-    password: password,
-    gi: gi,
-    cartera: cartera,
-    fechaing: fechaing,
-    fechabaja: fechabaja,
-  });
   $.ajax({
     type: "POST",
     url: "ajax/ajax_modificar_user.php",
     dataType: "json",
     data: {
-      id,
-      estado,
-      apellidos,
-      nombre,
-      dni,
-      sexo,
-      fechanac,
-      ec,
-      cargo,
-      direccion,
-      departamento,
-      distrito,
-      referencia,
-      fam,
-      hijos,
-      telefono,
-      movil,
-      email,
-      suc,
-      arr_items,
-      user,
-      password,
-      gi,
-      cartera,
-      fechaing,
-      fechabaja,
+      id: id,
+      estado: estado,
+      apellidos: apellidos,
+      nombre: nombre,
+      dni: dni,
+      sexo: sexo,
+      fechanac: fechanac,
+      ec: ec,
+      cargo: cargo,
+      direccion: direccion,
+      departamento: departamento,
+      distrito: distrito,
+      referencia: referencia,
+      fam: fam,
+      hijos: hijos,
+      telefono: telefono,
+      movil: movil,
+      email: email,
+      suc: suc,
+      arr_items: arr_items,
+      refrigerio: refrigerio,
+      user: user,
+      password: password,
+      gi: gi,
+      cartera: cartera,
+      fechaing: fechaing,
+      fechabaja: fechabaja,
     },
     success: function (response) {
-      console.log(response);
       if (response.codigo == 1) {
         window.location = "datatable_basic.php";
       } else if (response.codigo > 1) {
@@ -3095,6 +3076,13 @@ function modificar(
           },
         });
       }
+    },
+    error: function () {
+      swal({
+        title: "Mensaje del Sistema",
+        text: "No se pudo procesar la solicitud. Revise el registro de errores del servidor.",
+        type: "error",
+      });
     },
   });
 }

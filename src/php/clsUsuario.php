@@ -3,6 +3,27 @@ date_default_timezone_set('America/Lima');
 require_once "clsConexion.php";
 class clsUsuario
 {
+	private static function configurar_conexion_utf8()
+	{
+		/*
+		 * La aplicación y las tablas trabajan en UTF-8 real. No usar
+		 * utf8_encode()/utf8_decode() cuando la conexión ya es utf8mb4.
+		 */
+		if (!@mysql_set_charset('utf8mb4')) {
+			mysql_query("SET NAMES utf8mb4 COLLATE utf8mb4_general_ci");
+		}
+	}
+
+	private static function escapar($valor)
+	{
+		return mysql_real_escape_string((string)$valor);
+	}
+
+	private static function registrar_error_mysql($contexto)
+	{
+		error_log($contexto . ': ' . mysql_error());
+	}
+
 
 	public static function changelog()
 	{
@@ -53,93 +74,115 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT id,nombre FROM cargo order by nombre";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$sql = "SELECT id, nombre FROM cargo ORDER BY nombre";
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array("id" => $row["id"], "nombre" => utf8_encode($row["nombre"]));
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array("id" => $row["id"], "nombre" => $row["nombre"]);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_tipo');
 		}
+
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+		return $arr_datos;
 	}
 
 	public static function consulta_distrito()
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT codDistrito,distrito FROM ubigeo where departamento='LIMA' and provincia='LIMA'";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$sql = "SELECT codDistrito, distrito FROM ubigeo WHERE departamento='LIMA' AND provincia='LIMA'";
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array("codDistrito" => $row["codDistrito"], "distrito" => utf8_encode($row["distrito"]));
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array("codDistrito" => $row["codDistrito"], "distrito" => $row["distrito"]);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_distrito');
 		}
+
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+		return $arr_datos;
 	}
 
 	public static function consulta_ec()
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT id,nombre FROM estado_civil order by id";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$sql = "SELECT id, nombre FROM estado_civil ORDER BY id";
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array("id" => $row["id"], "nombre" => utf8_encode($row["nombre"]));
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array("id" => $row["id"], "nombre" => $row["nombre"]);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_ec');
 		}
+
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+		return $arr_datos;
 	}
 
 	public static function consulta_gi()
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT id,nombre FROM grado_ins order by id";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$sql = "SELECT id, nombre FROM grado_ins ORDER BY id";
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array("id" => $row["id"], "nombre" => utf8_encode($row["nombre"]));
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array("id" => $row["id"], "nombre" => $row["nombre"]);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_gi');
 		}
+
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+		return $arr_datos;
 	}
 
 	public static function consulta_sucursal()
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
+		self::configurar_conexion_utf8();
 
 		$sql = "SELECT
-        tb1.IDSUCURSAL as id,
-        CONCAT(tb1.SUCURSAL,' | ',tb1.DISTRITO) as nombre
-        FROM sucursal tb1
-        WHERE tb1.IDESTADO = 1
-        ORDER BY tb1.IDSUCURSAL";
+			tb1.IDSUCURSAL AS id,
+			CONCAT(tb1.SUCURSAL, ' | ', tb1.DISTRITO) AS nombre
+		FROM sucursal tb1
+		WHERE tb1.IDESTADO = 1
+		ORDER BY tb1.IDSUCURSAL";
 
 		$res = mysql_query($sql);
-
 		$arr_datos = array();
 
 		if ($res) {
-			while ($row = mysql_fetch_array($res)) {
-				$arr_datos[] = array(
-					"id" => $row["id"],
-					"nombre" => $row["nombre"]
-				);
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array("id" => $row["id"], "nombre" => $row["nombre"]);
 			}
+		} else {
+			self::registrar_error_mysql('consulta_sucursal');
 		}
 
 		$objConx->desconectar();
-
 		return $arr_datos;
 	}
 
@@ -147,25 +190,29 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "
-			SELECT
-				a.idhorario AS id,
-				CONCAT(a.horainicio,'-',a.horafin,' | ',b.nombre,' | ',a.horario) AS nombre
-			FROM horario a
-			LEFT JOIN horario_dia b
-				ON a.dias=b.id
-			WHERE a.IDESTADO = 1
-			ORDER BY idhorario
-		";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$sql = "SELECT
+			a.idhorario AS id,
+			CONCAT(a.horainicio, '-', a.horafin, ' | ', b.nombre, ' | ', a.horario) AS nombre
+		FROM horario a
+		LEFT JOIN horario_dia b ON a.dias = b.id
+		WHERE a.IDESTADO = 1
+		ORDER BY a.idhorario";
+
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array("id" => $row["id"], "nombre" => utf8_encode($row["nombre"]));
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array("id" => $row["id"], "nombre" => $row["nombre"]);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_horario');
 		}
+
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+		return $arr_datos;
 	}
 
 
@@ -173,73 +220,267 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT a.IDPERSONAL as id,concat(a.APELLIDOS,', ',a.NOMBRES) as nombre FROM personal a where id_cartera=$id_cartera
-				order by apellidos asc";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$id_cartera = (int)$id_cartera;
+		$sql = "SELECT a.IDPERSONAL AS id, CONCAT(a.APELLIDOS, ', ', a.NOMBRES) AS nombre
+			FROM personal a
+			WHERE a.id_cartera = $id_cartera
+			ORDER BY a.APELLIDOS ASC";
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array("id" => $row["id"], "nombre" => utf8_encode($row["nombre"]));
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array("id" => $row["id"], "nombre" => $row["nombre"]);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_usuario');
 		}
+
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+		return $arr_datos;
 	}
 
-	public static function registrar_empleado($APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $FECHAING)
+
+	public static function consulta_refrigerio()
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
+		self::configurar_conexion_utf8();
 
-		$fecha = date("Y-m-d H:i:s");
+		$sql = "SELECT
+			IDREFRIGERIO AS id,
+			CONCAT(
+				TIME_FORMAT(HORAINICIO, '%H:%i'),
+				' - ',
+				TIME_FORMAT(HORAFIN, '%H:%i'),
+				CASE WHEN REFRIGERIO IS NULL OR TRIM(REFRIGERIO) = '' THEN '' ELSE CONCAT(' | ', REFRIGERIO) END
+			) AS nombre
+		FROM refrigerio
+		WHERE IDESTADO=1
+		ORDER BY HORAINICIO, HORAFIN, IDREFRIGERIO";
 
-		$APELLIDOS  = mysql_real_escape_string($APELLIDOS);
-		$NOMBRES    = mysql_real_escape_string($NOMBRES);
-		$FECHANAC   = mysql_real_escape_string($FECHANAC);
-		$SEXO       = mysql_real_escape_string($SEXO);
-		$DOC        = mysql_real_escape_string($DOC);
-		$ESTCIV     = mysql_real_escape_string($ESTCIV);
-		$CARFAM     = mysql_real_escape_string($CARFAM);
-		$NUMHIJ     = mysql_real_escape_string($NUMHIJ);
-		$DIRECCION  = mysql_real_escape_string($DIRECCION);
-		$DISTRITO   = mysql_real_escape_string($DISTRITO);
-		$DPTO       = mysql_real_escape_string($DPTO);
-		$REFDIR     = mysql_real_escape_string($REFDIR);
-		$TLF        = mysql_real_escape_string($TLF);
-		$CEL        = mysql_real_escape_string($CEL);
-		$EMAIL      = mysql_real_escape_string($EMAIL);
-		$GRADOINS   = mysql_real_escape_string($GRADOINS);
-		$CARGO      = mysql_real_escape_string($CARGO);
-		$IDSUCURSAL = mysql_real_escape_string($IDSUCURSAL);
-		$USUARIO    = mysql_real_escape_string($USUARIO);
-		$FECHAING   = mysql_real_escape_string($FECHAING);
-		$cartera    = mysql_real_escape_string($cartera);
-
-		$passwordHash = password_hash($PASSWORD, PASSWORD_BCRYPT);
-
-		mysql_query("SET @anexo := (SELECT COALESCE(MAX(ANEXO_BACKUP), 1000) + 1 FROM personal)");
-
-		$sql = "
-    INSERT INTO personal (
-        APELLIDOS, NOMBRES, FECHANAC, SEXO, DOC, ESTCIV, CARFAM, NUMHIJ,
-        DIRECCION, DISTRITO, DPTO, REFDIR, TLF, CEL, EMAIL, GRADOINS, CARGO,
-        IDSUCURSAL, USUARIO, PASSWORD, IDESTADO, fecha_registro, fecha_baja,
-        id_cartera, api_token, fecha_ing, TIPO_PERSONAL, ANYDESK, ANEXO_BACKUP
-    ) VALUES (
-        UPPER('$APELLIDOS'), UPPER('$NOMBRES'), '$FECHANAC', '$SEXO', '$DOC',
-        '$ESTCIV', '$CARFAM', '$NUMHIJ', '$DIRECCION', '$DISTRITO', '$DPTO',
-        '$REFDIR', '$TLF', '$CEL', '$EMAIL', '$GRADOINS', '$CARGO',
-        '$IDSUCURSAL', UPPER('$USUARIO'), '$passwordHash', 1,
-        '$fecha', '0000-00-00', $cartera, NULL, '$FECHAING',
-        'HUMANO', NULL, @anexo
-    )";
-
-		mysql_query($sql) or die(mysql_error());
-
-		$id = mysql_insert_id();
+		$res = mysql_query($sql);
+		$arr_datos = array();
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array('id' => $row['id'], 'nombre' => $row['nombre']);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_refrigerio');
+		}
 
 		$objConx->desconectar();
+		return $arr_datos;
+	}
 
+	public static function validar_refrigerio($idRefrigerio)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$idRefrigerio = (int)$idRefrigerio;
+		$res = mysql_query("SELECT IDREFRIGERIO FROM refrigerio WHERE IDREFRIGERIO=$idRefrigerio AND IDESTADO=1 LIMIT 1");
+		$valido = $res && mysql_num_rows($res) === 1;
+
+		if (!$res) {
+			self::registrar_error_mysql('validar_refrigerio');
+		}
+		$objConx->desconectar();
+		return $valido;
+	}
+
+	public static function select_refrigerio_personal($idPersonal)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$idPersonal = (int)$idPersonal;
+		$sql = "SELECT
+			pr.ID,
+			pr.ID_REFRIGERIO,
+			r.REFRIGERIO,
+			r.HORAINICIO,
+			r.HORAFIN
+		FROM personal_refrigerio pr
+		INNER JOIN refrigerio r ON r.IDREFRIGERIO=pr.ID_REFRIGERIO
+		WHERE pr.ID_PERSONAL=$idPersonal AND pr.IDESTADO=1
+		ORDER BY pr.ID DESC
+		LIMIT 1";
+
+		$res = mysql_query($sql);
+		$arr_datos = array();
+		if ($res && ($row = mysql_fetch_assoc($res))) {
+			$arr_datos = $row;
+		} elseif (!$res) {
+			self::registrar_error_mysql('select_refrigerio_personal');
+		}
+
+		$objConx->desconectar();
+		return $arr_datos;
+	}
+
+	public static function verificar_nombre_user_update($user, $idPersonal)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$user = self::escapar(trim($user));
+		$idPersonal = (int)$idPersonal;
+		$res = mysql_query("SELECT IDPERSONAL FROM personal WHERE USUARIO=UPPER('$user') AND IDPERSONAL<>$idPersonal");
+		$arr_datos = array();
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = $row;
+			}
+		} else {
+			self::registrar_error_mysql('verificar_nombre_user_update');
+		}
+
+		$objConx->desconectar();
+		return $arr_datos;
+	}
+
+	public static function registrar_empleado($APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $FECHAING, $IDREFRIGERIO = 0, $USUARIO_REGISTRO = 0, $HORARIOS = array())
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$SEXO = (int)$SEXO;
+		$ESTCIV = (int)$ESTCIV;
+		$CARFAM = (int)$CARFAM;
+		$NUMHIJ = (int)$NUMHIJ;
+		$GRADOINS = (int)$GRADOINS;
+		$CARGO = (int)$CARGO;
+		$IDSUCURSAL = (int)$IDSUCURSAL;
+		$cartera = (int)$cartera;
+		$IDREFRIGERIO = (int)$IDREFRIGERIO;
+		$USUARIO_REGISTRO = (int)$USUARIO_REGISTRO;
+
+		if ($IDREFRIGERIO <= 0 || $USUARIO_REGISTRO <= 0 || !is_array($HORARIOS) || count($HORARIOS) === 0) {
+			$objConx->desconectar();
+			return false;
+		}
+
+		$APELLIDOS = self::escapar(trim($APELLIDOS));
+		$NOMBRES = self::escapar(trim($NOMBRES));
+		$FECHANAC = self::escapar(trim($FECHANAC));
+		$DOC = self::escapar(trim($DOC));
+		$DIRECCION = self::escapar(trim($DIRECCION));
+		$DISTRITO = self::escapar(trim($DISTRITO));
+		$DPTO = self::escapar(trim($DPTO));
+		$REFDIR = self::escapar(trim($REFDIR));
+		$TLF = self::escapar(trim($TLF));
+		$CEL = self::escapar(trim($CEL));
+		$EMAIL = self::escapar(trim($EMAIL));
+		$USUARIO = self::escapar(trim($USUARIO));
+		$FECHAING = self::escapar(trim($FECHAING));
+		$fecha = date('Y-m-d H:i:s');
+
+		$passwordHash = password_hash($PASSWORD, PASSWORD_BCRYPT);
+		if ($passwordHash === false) {
+			$objConx->desconectar();
+			return false;
+		}
+		$passwordHash = self::escapar($passwordHash);
+
+		mysql_query('START TRANSACTION');
+
+		$resRefrigerio = mysql_query("SELECT IDREFRIGERIO FROM refrigerio WHERE IDREFRIGERIO=$IDREFRIGERIO AND IDESTADO=1 LIMIT 1");
+		if (!$resRefrigerio || mysql_num_rows($resRefrigerio) !== 1) {
+			self::registrar_error_mysql('registrar_empleado: refrigerio invalido');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		if (!mysql_query("SET @anexo := (SELECT COALESCE(MAX(ANEXO_BACKUP), 1000) + 1 FROM personal)")) {
+			self::registrar_error_mysql('registrar_empleado: anexo');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$sql = "INSERT INTO personal (
+			APELLIDOS, NOMBRES, FECHANAC, SEXO, DOC, ESTCIV, CARFAM, NUMHIJ,
+			DIRECCION, DISTRITO, DPTO, REFDIR, TLF, CEL, EMAIL, GRADOINS, CARGO,
+			IDSUCURSAL, USUARIO, PASSWORD, IDESTADO, fecha_registro, fecha_baja,
+			id_cartera, api_token, fecha_ing, TIPO_PERSONAL, ANYDESK, ANEXO_BACKUP
+		) VALUES (
+			UPPER('$APELLIDOS'), UPPER('$NOMBRES'), '$FECHANAC', $SEXO, '$DOC',
+			$ESTCIV, $CARFAM, $NUMHIJ, '$DIRECCION', '$DISTRITO', '$DPTO',
+			'$REFDIR', '$TLF', '$CEL', '$EMAIL', $GRADOINS, $CARGO,
+			$IDSUCURSAL, UPPER('$USUARIO'), '$passwordHash', 1,
+			'$fecha', '0000-00-00', $cartera, NULL, '$FECHAING',
+			'HUMANO', NULL, @anexo
+		)";
+
+		if (!mysql_query($sql)) {
+			self::registrar_error_mysql('registrar_empleado: personal');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$id = (int)mysql_insert_id();
+
+		$horariosUnicos = array();
+		foreach ($HORARIOS as $idHorario) {
+			$idHorario = (int)$idHorario;
+			if ($idHorario > 0) {
+				$horariosUnicos[$idHorario] = $idHorario;
+			}
+		}
+
+		if (count($horariosUnicos) === 0) {
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$listaHorarios = implode(',', $horariosUnicos);
+		$resHorariosValidos = mysql_query("SELECT COUNT(*) AS total FROM horario WHERE IDESTADO=1 AND idhorario IN ($listaHorarios)");
+		$filaHorariosValidos = $resHorariosValidos ? mysql_fetch_assoc($resHorariosValidos) : false;
+		if (!$filaHorariosValidos || (int)$filaHorariosValidos['total'] !== count($horariosUnicos)) {
+			self::registrar_error_mysql('registrar_empleado: horarios invalidos');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		foreach ($horariosUnicos as $idHorario) {
+			if (!mysql_query("INSERT INTO horario_personal VALUES (DEFAULT, $idHorario, $id)")) {
+				self::registrar_error_mysql('registrar_empleado: horario');
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+		}
+
+		$sqlRefrigerio = "INSERT INTO personal_refrigerio
+			(ID_PERSONAL, ID_REFRIGERIO, FECHA_INICIO, FECHA_FIN, IDESTADO, USUARIO_REGISTRO, FECHA_REGISTRO)
+			VALUES ($id, $IDREFRIGERIO, NOW(), NULL, 1, $USUARIO_REGISTRO, NOW())";
+
+		if (!mysql_query($sqlRefrigerio)) {
+			self::registrar_error_mysql('registrar_empleado: personal_refrigerio');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		if (!mysql_query('COMMIT')) {
+			self::registrar_error_mysql('registrar_empleado: commit');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$objConx->desconectar();
 		return $id;
 	}
 
@@ -247,12 +488,25 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "INSERT INTO horario_personal VALUES(default,$id_horario,$id)";
-		//echo($sql);
-		$res = mysql_query($sql) or die(mysql_error());
-		$res = mysql_insert_id();
+		self::configurar_conexion_utf8();
+
+		$id_horario = (int)$id_horario;
+		$id = (int)$id;
+		if ($id_horario <= 0 || $id <= 0) {
+			$objConx->desconectar();
+			return false;
+		}
+
+		$res = mysql_query("INSERT INTO horario_personal VALUES (DEFAULT, $id_horario, $id)");
+		if (!$res) {
+			self::registrar_error_mysql('registrar_item');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$insertId = mysql_insert_id();
 		$objConx->desconectar();
-		return $res;
+		return $insertId;
 	}
 
 	public static function eliminar_item($id)
@@ -388,16 +642,24 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$fecha = date("Y-m-d H:i:s");
-		$sql = "select * from login 
-				where id_user='$id_usuario' 
-				 and date(fecha)= date('$fecha')
-				";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$id_usuario = (int)$id_usuario;
+		$fecha = date('Y-m-d H:i:s');
+		$sql = "SELECT id_user FROM login
+			WHERE id_user=$id_usuario
+			AND DATE(fecha)=DATE('$fecha')";
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = $row;
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = $row;
+			}
+		} else {
+			self::registrar_error_mysql('verificar_sesion');
 		}
+
 		$objConx->desconectar();
 		return $arr_datos;
 	}
@@ -433,12 +695,20 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "select * from personal where doc='$dni' ";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$dni = self::escapar(trim($dni));
+		$res = mysql_query("SELECT IDPERSONAL FROM personal WHERE DOC='$dni'");
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = $row;
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = $row;
+			}
+		} else {
+			self::registrar_error_mysql('verificar_dni');
 		}
+
 		$objConx->desconectar();
 		return $arr_datos;
 	}
@@ -449,12 +719,21 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "select * from personal where doc='$dni' and idpersonal=$user";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$dni = self::escapar(trim($dni));
+		$user = (int)$user;
+		$res = mysql_query("SELECT IDPERSONAL FROM personal WHERE DOC='$dni' AND IDPERSONAL<>$user");
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = $row;
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = $row;
+			}
+		} else {
+			self::registrar_error_mysql('verificar_dni_update');
 		}
+
 		$objConx->desconectar();
 		return $arr_datos;
 	}
@@ -465,12 +744,20 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "select * from personal where usuario=UPPER('$user')";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$user = self::escapar(trim($user));
+		$res = mysql_query("SELECT IDPERSONAL FROM personal WHERE USUARIO=UPPER('$user')");
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = $row;
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = $row;
+			}
+		} else {
+			self::registrar_error_mysql('verificar_nombre_user');
 		}
+
 		$objConx->desconectar();
 		return $arr_datos;
 	}
@@ -481,36 +768,36 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
+		self::configurar_conexion_utf8();
 
 		$id = (int)$id;
+		$sql = "SELECT CONTRASENA
+			FROM HISTORIAL_CAMBIOS_CONTRASENA
+			WHERE ID_USUARIO=$id
+			ORDER BY ID_HIST_CAMBIO_CONTRASENA DESC
+			LIMIT 10";
 
-		$sql = "
-        SELECT CONTRASENA 
-        FROM HISTORIAL_CAMBIOS_CONTRASENA 
-        WHERE ID_USUARIO = $id
-        ORDER BY ID_HIST_CAMBIO_CONTRASENA DESC
-        LIMIT 10
-    ";
-
-		$res = mysql_query($sql) or die(mysql_error());
+		$res = mysql_query($sql);
+		if (!$res) {
+			self::registrar_error_mysql('verificar_password');
+			$objConx->desconectar();
+			return false;
+		}
 
 		while ($row = mysql_fetch_assoc($res)) {
-
 			$hash = $row['CONTRASENA'];
+			if ($hash === null || $hash === '') {
+				continue;
+			}
 
-			if (!empty($hash)) {
-
-				if ($hash[0] === '$') {
-					if (password_verify($passwordPlano, $hash)) {
-						$objConx->desconectar();
-						return true;
-					}
-				} else {
-					if (md5($passwordPlano) === $hash) {
-						$objConx->desconectar();
-						return true;
-					}
+			if (isset($hash[0]) && $hash[0] === '$') {
+				if (password_verify($passwordPlano, $hash)) {
+					$objConx->desconectar();
+					return true;
 				}
+			} elseif (md5($passwordPlano) === $hash) {
+				$objConx->desconectar();
+				return true;
 			}
 		}
 
@@ -524,44 +811,57 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "
-			SELECT 
-				CONCAT(YEAR(b.fecha_registro),'-', LPAD(b.idpersonal,5,'0') ) as idpersonal,
-				CONCAT(nombres,' ',apellidos) as empleado,
-				b.DOC as dni,
-				b.password,
-				usuario as user,
-				c.nombre as tipo,
-				car.cartera AS cartera,
-				IF(IDESTADO=1,'<label>ACTIVE</label>','<label>SUSPENDED</label>') as estado,
-				'' as opciones
-			FROM personal b
-			LEFT JOIN cargo c ON c.id=b.CARGO
-			LEFT JOIN cartera car ON b.id_cartera=car.id
-			WHERE
-				b.id_cartera IN (80,65,40)
-				OR EXISTS (
-					SELECT 1
-					FROM asignacion_tabla at
-					INNER JOIN tabla_log tl ON at.id_tabla = tl.id
-					INNER JOIN cartera ca ON tl.id_cartera = ca.id
-					WHERE at.id_usuario = b.IDPERSONAL
-						AND ca.estado = 1
-						AND tl.estado = 0
-						AND ca.id IN (80,65,40)
-				)
-			ORDER BY b.IDPERSONAL DESC
-		";
-		$res = mysql_query($sql) or die(mysql_error());
-		//echo($sql);
+		self::configurar_conexion_utf8();
+
+		$sql = "SELECT
+			CONCAT(YEAR(b.fecha_registro), '-', LPAD(b.idpersonal, 5, '0')) AS idpersonal,
+			CONCAT(b.NOMBRES, ' ', b.APELLIDOS) AS empleado,
+			b.DOC AS dni,
+			'********' AS password,
+			b.USUARIO AS user,
+			c.nombre AS tipo,
+			car.cartera AS cartera,
+			IF(b.IDESTADO=1, '<label>ACTIVE</label>', '<label>SUSPENDED</label>') AS estado,
+			'' AS opciones
+		FROM personal b
+		LEFT JOIN cargo c ON c.id=b.CARGO
+		LEFT JOIN cartera car ON b.id_cartera=car.id
+		WHERE b.id_cartera IN (80,65,40)
+			OR EXISTS (
+				SELECT 1
+				FROM asignacion_tabla at
+				INNER JOIN tabla_log tl ON at.id_tabla = tl.id
+				INNER JOIN cartera ca ON tl.id_cartera = ca.id
+				WHERE at.id_usuario = b.IDPERSONAL
+					AND ca.estado = 1
+					AND tl.estado = 0
+					AND ca.id IN (80,65,40)
+			)
+		ORDER BY b.IDPERSONAL DESC";
+
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array($row["idpersonal"], utf8_encode($row["empleado"]), $row["dni"], utf8_encode($row["password"]), utf8_encode($row["user"]), $row["tipo"], $row["cartera"], $row["estado"], $row["opciones"]);
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array(
+					$row['idpersonal'],
+					$row['empleado'],
+					$row['dni'],
+					$row['password'],
+					$row['user'],
+					$row['tipo'],
+					$row['cartera'],
+					$row['estado'],
+					$row['opciones']
+				);
+			}
+		} else {
+			self::registrar_error_mysql('listar_user');
 		}
+
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+		return $arr_datos;
 	}
 
 	// ============================================= FUNCION PARA EXPORTAR A EXCEL =============================================
@@ -570,6 +870,7 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
+		self::configurar_conexion_utf8();
 		$sql = "SELECT CONCAT(YEAR(b.fecha_registro),'-', LPAD(b.idpersonal,5,'0') ) as idpersonal,concat(nombres,' ',apellidos) as empleado,
 					FECHANAC, if(SEXO=1,'M','F') as sexo ,b.DOC as dni, d.nombre as ESTCIV,CARFAM,NUMHIJ,b.DIRECCION,b.DISTRITO,b.DPTO,b.REFDIR,
 					b.TLF,b.CEL,b.EMAIL,e.nombre as GRADOINS,c.nombre as CARGO,
@@ -584,16 +885,18 @@ class clsUsuario
 					order by 2 asc
 		";
 
-		$res = mysql_query($sql) or die(mysql_error());
+		$res = mysql_query($sql);
 
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array(utf8_encode($row["idpersonal"]), utf8_encode($row["empleado"]), utf8_encode($row["FECHANAC"]), utf8_encode($row["sexo"]), utf8_encode($row["dni"]), utf8_encode($row["ESTCIV"]), utf8_encode($row["CARFAM"]), utf8_encode($row["NUMHIJ"]), utf8_encode($row["DIRECCION"]), utf8_encode($row["DISTRITO"]), utf8_encode($row["DPTO"]), utf8_encode($row["REFDIR"]), utf8_encode($row["TLF"]), utf8_encode($row["CEL"]), utf8_encode($row["EMAIL"]), utf8_encode($row["GRADOINS"]), utf8_encode($row["CARGO"]), utf8_encode($row["sucursal"]), utf8_encode($row["user"]), utf8_encode($row["fecha_registro"]), utf8_encode($row["estado"]), utf8_encode($row["cartera"]));
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array($row["idpersonal"], $row["empleado"], $row["FECHANAC"], $row["sexo"], $row["dni"], $row["ESTCIV"], $row["CARFAM"], $row["NUMHIJ"], $row["DIRECCION"], $row["DISTRITO"], $row["DPTO"], $row["REFDIR"], $row["TLF"], $row["CEL"], $row["EMAIL"], $row["GRADOINS"], $row["CARGO"], $row["sucursal"], $row["user"], $row["fecha_registro"], $row["estado"], $row["cartera"]);
+			}
+		} else {
+			self::registrar_error_mysql('excel');
 		}
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+		return $arr_datos;
 	}
 
 	// =============================================  FUNCION PARA LISTAR USUARIOS ONLINE =============================================
@@ -602,22 +905,24 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
+		self::configurar_conexion_utf8();
 		$fecha = date("Y-m-d");
 		$sql = "SELECT distinct usuario as user,ut.nombre as tipo from login ll
 				left join personal uu on uu.idpersonal=ll.id_user
 				left join cargo ut on uu.cargo=ut.id 
 				where ll.tipo='IN' and date(ll.fecha)= date('$fecha')
 				order by uu.usuario desc";
-		$res = mysql_query($sql) or die(mysql_error());
-		//echo($sql);
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = array(utf8_encode($row["user"]), utf8_encode($row["tipo"]));
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array($row["user"], $row["tipo"]);
+			}
+		} else {
+			self::registrar_error_mysql('listar_user_online');
 		}
 		$objConx->desconectar();
-		if ($res)
-			return $arr_datos;
-		return $res;
+		return $arr_datos;
 	}
 
 	// =============================================  FUNCION PARA LISTAR USUARIO POR ID =============================================
@@ -626,14 +931,29 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT * from personal
-			a left join ubigeo b on a.DPTO=b.departamento and a.DISTRITO=b.distrito
-		WHERE idpersonal = $id ";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$id = (int)$id;
+		$sql = "SELECT
+			a.IDPERSONAL, a.APELLIDOS, a.NOMBRES, a.FECHANAC, a.SEXO, a.DOC,
+			a.ESTCIV, a.CARFAM, a.NUMHIJ, a.DIRECCION, a.DISTRITO, a.DPTO,
+			a.REFDIR, a.TLF, a.CEL, a.EMAIL, a.GRADOINS, a.CARGO, a.IDSUCURSAL,
+			a.USUARIO, a.IDESTADO, a.fecha_baja, a.id_cartera, a.fecha_ing,
+			b.codDepartamento, b.codProvincia, b.codDistrito
+		FROM personal a
+		LEFT JOIN ubigeo b ON a.DPTO=b.departamento AND a.DISTRITO=b.distrito
+		WHERE a.IDPERSONAL=$id
+		LIMIT 1";
+
+		$res = mysql_query($sql);
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
+
+		if ($res && ($row = mysql_fetch_assoc($res))) {
 			$arr_datos = $row;
+		} elseif (!$res) {
+			self::registrar_error_mysql('select_user');
 		}
+
 		$objConx->desconectar();
 		return $arr_datos;
 	}
@@ -644,14 +964,20 @@ class clsUsuario
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
-		$sql = "SELECT idhorario,id 
-		from horario_personal 
-		WHERE idpersonal = $id";
-		$res = mysql_query($sql) or die(mysql_error());
+		self::configurar_conexion_utf8();
+
+		$id = (int)$id;
+		$res = mysql_query("SELECT idhorario, id FROM horario_personal WHERE idpersonal=$id");
 		$arr_datos = array();
-		while ($row = mysql_fetch_array($res)) {
-			$arr_datos[] = $row;
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = $row;
+			}
+		} else {
+			self::registrar_error_mysql('select_detalle');
 		}
+
 		$objConx->desconectar();
 		return $arr_datos;
 	}
@@ -682,92 +1008,196 @@ class clsUsuario
 		$cartera,
 		$FECHAING,
 		$FECHABAJA,
-		$idUsuarioModifica
+		$idUsuarioModifica,
+		$IDREFRIGERIO = 0,
+		$HORARIOS = null
 	) {
 		$objConx = new clsConexion();
 		$objConx->conectar();
+		self::configurar_conexion_utf8();
 
 		$id = (int)$id;
 		$estado = (int)$estado;
-		$NUMHIJ = (int)$NUMHIJ;
+		$SEXO = (int)$SEXO;
 		$ESTCIV = (int)$ESTCIV;
+		$CARFAM = (int)$CARFAM;
+		$NUMHIJ = (int)$NUMHIJ;
+		$GRADOINS = (int)$GRADOINS;
 		$CARGO = (int)$CARGO;
 		$IDSUCURSAL = (int)$IDSUCURSAL;
 		$cartera = (int)$cartera;
 		$idUsuarioModifica = (int)$idUsuarioModifica;
+		$IDREFRIGERIO = (int)$IDREFRIGERIO;
 
-		mysql_query("SET @id_usuario_modifica := {$idUsuarioModifica}");
-
-		/* =====================================
-       SI NO CAMBIA PASSWORD
-    ===================================== */
-		if ($PASSWORD === null) {
-
-			$sql = "UPDATE personal SET 
-            IDESTADO=$estado,
-            APELLIDOS=UPPER('$APELLIDOS'),
-            NOMBRES=UPPER('$NOMBRES'),
-            FECHANAC='$FECHANAC',
-            SEXO='$SEXO',
-            DOC='$DOC',
-            ESTCIV=$ESTCIV,
-            CARFAM='$CARFAM',
-            NUMHIJ=$NUMHIJ,
-            DIRECCION='$DIRECCION',
-            DISTRITO='$DISTRITO',
-            DPTO='$DPTO',
-            REFDIR='$REFDIR',
-            TLF='$TLF',
-            CEL='$CEL',
-            EMAIL='$EMAIL',
-            GRADOINS='$GRADOINS',
-            CARGO=$CARGO,
-            IDSUCURSAL=$IDSUCURSAL,
-            USUARIO='$USUARIO',
-            fecha_baja='$FECHABAJA',
-            id_cartera=$cartera,
-            fecha_ing='$FECHAING'
-            WHERE idpersonal=$id";
+		if ($id <= 0 || $IDREFRIGERIO <= 0 || $idUsuarioModifica <= 0) {
+			$objConx->desconectar();
+			return false;
 		}
-		/* =====================================
-       SI CAMBIA PASSWORD
-    ===================================== */ else {
 
+		$APELLIDOS = self::escapar(trim($APELLIDOS));
+		$NOMBRES = self::escapar(trim($NOMBRES));
+		$FECHANAC = self::escapar(trim($FECHANAC));
+		$DOC = self::escapar(trim($DOC));
+		$DIRECCION = self::escapar(trim($DIRECCION));
+		$DISTRITO = self::escapar(trim($DISTRITO));
+		$DPTO = self::escapar(trim($DPTO));
+		$REFDIR = self::escapar(trim($REFDIR));
+		$TLF = self::escapar(trim($TLF));
+		$CEL = self::escapar(trim($CEL));
+		$EMAIL = self::escapar(trim($EMAIL));
+		$USUARIO = self::escapar(trim($USUARIO));
+		$FECHAING = self::escapar(trim($FECHAING));
+		$FECHABAJA = self::escapar(trim($FECHABAJA));
+
+		mysql_query('START TRANSACTION');
+		mysql_query("SET @id_usuario_modifica := $idUsuarioModifica");
+
+		$resRefrigerio = mysql_query("SELECT IDREFRIGERIO FROM refrigerio WHERE IDREFRIGERIO=$IDREFRIGERIO AND IDESTADO=1 LIMIT 1");
+		if (!$resRefrigerio || mysql_num_rows($resRefrigerio) !== 1) {
+			self::registrar_error_mysql('update_empleado: refrigerio invalido');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$passwordSql = '';
+		if ($PASSWORD !== null && trim($PASSWORD) !== '') {
 			$passwordHash = password_hash($PASSWORD, PASSWORD_BCRYPT);
-			$passwordHash = mysql_real_escape_string($passwordHash);
-
-			$sql = "UPDATE personal SET 
-            IDESTADO=$estado,
-            APELLIDOS=UPPER('$APELLIDOS'),
-            NOMBRES=UPPER('$NOMBRES'),
-            FECHANAC='$FECHANAC',
-            SEXO='$SEXO',
-            DOC='$DOC',
-            ESTCIV=$ESTCIV,
-            CARFAM='$CARFAM',
-            NUMHIJ=$NUMHIJ,
-            DIRECCION='$DIRECCION',
-            DISTRITO='$DISTRITO',
-            DPTO='$DPTO',
-            REFDIR='$REFDIR',
-            TLF='$TLF',
-            CEL='$CEL',
-            EMAIL='$EMAIL',
-            GRADOINS='$GRADOINS',
-            CARGO=$CARGO,
-            IDSUCURSAL=$IDSUCURSAL,
-            USUARIO='$USUARIO',
-            PASSWORD='$passwordHash',
-            fecha_baja='$FECHABAJA',
-            id_cartera=$cartera,
-            fecha_ing='$FECHAING'
-            WHERE idpersonal=$id";
+			if ($passwordHash === false) {
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+			$passwordHash = self::escapar($passwordHash);
+			$passwordSql = ", PASSWORD='$passwordHash'";
 		}
 
-		mysql_query($sql) or die(mysql_error());
+		$sql = "UPDATE personal SET
+			IDESTADO=$estado,
+			APELLIDOS=UPPER('$APELLIDOS'),
+			NOMBRES=UPPER('$NOMBRES'),
+			FECHANAC='$FECHANAC',
+			SEXO=$SEXO,
+			DOC='$DOC',
+			ESTCIV=$ESTCIV,
+			CARFAM=$CARFAM,
+			NUMHIJ=$NUMHIJ,
+			DIRECCION='$DIRECCION',
+			DISTRITO='$DISTRITO',
+			DPTO='$DPTO',
+			REFDIR='$REFDIR',
+			TLF='$TLF',
+			CEL='$CEL',
+			EMAIL='$EMAIL',
+			GRADOINS=$GRADOINS,
+			CARGO=$CARGO,
+			IDSUCURSAL=$IDSUCURSAL,
+			USUARIO=UPPER('$USUARIO'),
+			fecha_baja='$FECHABAJA',
+			id_cartera=$cartera,
+			fecha_ing='$FECHAING'
+			$passwordSql
+		WHERE IDPERSONAL=$id";
+
+		if (!mysql_query($sql)) {
+			self::registrar_error_mysql('update_empleado: personal');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$resActual = mysql_query("SELECT ID, ID_REFRIGERIO FROM personal_refrigerio WHERE ID_PERSONAL=$id AND IDESTADO=1 ORDER BY ID DESC LIMIT 1 FOR UPDATE");
+		if (!$resActual) {
+			self::registrar_error_mysql('update_empleado: consultar refrigerio');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$actual = mysql_fetch_assoc($resActual);
+		if ($actual && (int)$actual['ID_REFRIGERIO'] === $IDREFRIGERIO) {
+			$idAsignacionActual = (int)$actual['ID'];
+			if (!mysql_query("UPDATE personal_refrigerio SET IDESTADO=0, FECHA_FIN=NOW() WHERE ID_PERSONAL=$id AND IDESTADO=1 AND ID<>$idAsignacionActual")) {
+				self::registrar_error_mysql('update_empleado: cerrar refrigerios duplicados');
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+		} else {
+			if (!mysql_query("UPDATE personal_refrigerio SET IDESTADO=0, FECHA_FIN=NOW() WHERE ID_PERSONAL=$id AND IDESTADO=1")) {
+				self::registrar_error_mysql('update_empleado: cerrar refrigerio');
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+
+			$sqlRefrigerio = "INSERT INTO personal_refrigerio
+				(ID_PERSONAL, ID_REFRIGERIO, FECHA_INICIO, FECHA_FIN, IDESTADO, USUARIO_REGISTRO, FECHA_REGISTRO)
+				VALUES ($id, $IDREFRIGERIO, NOW(), NULL, 1, $idUsuarioModifica, NOW())";
+			if (!mysql_query($sqlRefrigerio)) {
+				self::registrar_error_mysql('update_empleado: insertar refrigerio');
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+		}
+
+		if ($HORARIOS !== null) {
+			if (!is_array($HORARIOS) || count($HORARIOS) === 0) {
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+
+			if (!mysql_query("DELETE FROM horario_personal WHERE idpersonal=$id")) {
+				self::registrar_error_mysql('update_empleado: borrar horarios');
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+
+			$horariosUnicos = array();
+			foreach ($HORARIOS as $idHorario) {
+				$idHorario = (int)$idHorario;
+				if ($idHorario > 0) {
+					$horariosUnicos[$idHorario] = $idHorario;
+				}
+			}
+
+			if (count($horariosUnicos) === 0) {
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+
+			$listaHorarios = implode(',', $horariosUnicos);
+			$resHorariosValidos = mysql_query("SELECT COUNT(*) AS total FROM horario WHERE IDESTADO=1 AND idhorario IN ($listaHorarios)");
+			$filaHorariosValidos = $resHorariosValidos ? mysql_fetch_assoc($resHorariosValidos) : false;
+			if (!$filaHorariosValidos || (int)$filaHorariosValidos['total'] !== count($horariosUnicos)) {
+				self::registrar_error_mysql('update_empleado: horarios invalidos');
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+
+			foreach ($horariosUnicos as $idHorario) {
+				if (!mysql_query("INSERT INTO horario_personal VALUES (DEFAULT, $idHorario, $id)")) {
+					self::registrar_error_mysql('update_empleado: insertar horario');
+					mysql_query('ROLLBACK');
+					$objConx->desconectar();
+					return false;
+				}
+			}
+		}
+
+		if (!mysql_query('COMMIT')) {
+			self::registrar_error_mysql('update_empleado: commit');
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
 
 		$objConx->desconectar();
-
 		return true;
 	}
 

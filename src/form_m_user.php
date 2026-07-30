@@ -5,47 +5,52 @@ require_once("php/clsSucursal.php");
 require_once("php/clsTable.php");
 session_start();
 
+function h_usuario($valor)
+{
+	return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+}
+
 if (!isset($_SESSION['user_ls'])) {
 	header("Location: index.php");
-} elseif ($_REQUEST['id'] == "") {
+	exit;
+}
+
+$idPersonal = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
+if ($idPersonal <= 0) {
 	header("Location: datatable_basic.php");
-} else {
-	$objUsuario = clsUsuario::select_user($_REQUEST['id']);
-	$objItem = clsUsuario::select_detalle($_REQUEST['id']);
+	exit;
+}
 
-	//var_dump($objItem);
+$objUsuario = clsUsuario::select_user($idPersonal);
+$objItem = clsUsuario::select_detalle($idPersonal);
+$objRefrigerio = clsUsuario::select_refrigerio_personal($idPersonal);
 
-	function isCombo($idhorario, $objItem)
-	{
-		$valor = -1;
-		for ($i = 0; $i < sizeof($objItem); $i++) {
-			//var_dump($objItem[$i]['idhorario']);
-			if ($objItem[$i]['idhorario'] == $idhorario) {
-				var_dump($objItem[$i]);
-				$valor = $objItem[$i]['idhorario'];
-				break;
-			}
+if (empty($objUsuario)) {
+	header("Location: datatable_basic.php");
+	exit;
+}
+
+function isCombo($idhorario, $objItem)
+{
+	foreach ($objItem as $item) {
+		if ((int)$item['idhorario'] === (int)$idhorario) {
+			return (int)$item['idhorario'];
 		}
-		return $valor;
 	}
-
-	//echo( isCombo(1, $objItem));
-
-
-
+	return -1;
 }
 
 $obj = new clsUsuario;
 $arr_datos = $obj->version_system();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title><?php echo ($arr_datos[0][1]); ?></title>
+	<title><?php echo h_usuario($arr_datos[0][1]); ?></title>
 	<!-- Global stylesheets -->
 	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css">
 	<link href="assets/css/icons/icomoon/styles.css" rel="stylesheet" type="text/css">
@@ -138,7 +143,7 @@ $arr_datos = $obj->version_system();
 
 		<!-- Content area -->
 		<div class="content">
-			<form action="#" class="form-m-user">
+			<form action="#" class="form-m-user" method="post" accept-charset="UTF-8">
 				<div class="panel panel-flat">
 					<div class="panel-heading">
 						<div class="checkbox checkbox-switch">
@@ -168,13 +173,13 @@ $arr_datos = $obj->version_system();
 								<fieldset>
 									<div class="form-group">
 										<label>Apellido(s)</label>
-										<input type="hidden" id="id_user" name="id_user" class="form-control" value="<?php echo $objUsuario['IDPERSONAL']; ?>">
-										<input type="text" id="apellidos" name="apellidos" class="form-control" placeholder="Apellido Paterno, Materno" maxlength=70 required="required" value="<?php echo $objUsuario['APELLIDOS']; ?>">
+										<input type="hidden" id="id_user" name="id_user" class="form-control" value="<?php echo h_usuario(isset($objUsuario['IDPERSONAL']) ? $objUsuario['IDPERSONAL'] : ''); ?>">
+										<input type="text" id="apellidos" name="apellidos" class="form-control" placeholder="Apellido Paterno, Materno" maxlength=70 required="required" value="<?php echo h_usuario(isset($objUsuario['APELLIDOS']) ? $objUsuario['APELLIDOS'] : ''); ?>">
 									</div>
 
 									<div class="form-group">
 										<label>Nombre(s)</label>
-										<input type="text" id="nombre" name="nombre" class="form-control" placeholder="Nombre Completo" maxlength=70 required="required" value="<?php echo $objUsuario['NOMBRES']; ?>">
+										<input type="text" id="nombre" name="nombre" class="form-control" placeholder="Nombre Completo" maxlength=70 required="required" value="<?php echo h_usuario(isset($objUsuario['NOMBRES']) ? $objUsuario['NOMBRES'] : ''); ?>">
 									</div>
 
 									<div class="form-group">
@@ -190,7 +195,7 @@ $arr_datos = $obj->version_system();
 										<label>Fecha Nacimiento</label>
 										<div class="input-group">
 											<span class="input-group-addon"><i class="icon-calendar22"></i></span>
-											<input type="text" id="fechanac" name="fechanac" class="form-control pickadate" placeholder="1991-02-03" value="<?php echo $objUsuario['FECHANAC']; ?>" />
+											<input type="text" id="fechanac" name="fechanac" class="form-control pickadate" placeholder="1991-02-03" value="<?php echo h_usuario(isset($objUsuario['FECHANAC']) ? $objUsuario['FECHANAC'] : ''); ?>" />
 										</div>
 									</div>
 
@@ -203,9 +208,9 @@ $arr_datos = $obj->version_system();
 											$arr_datos = $obj->consulta_ec();
 											foreach ($arr_datos as $datos)
 												if ($datos['id'] == $objUsuario['ESTCIV']) {
-													echo '<option value="' . $datos['id'] . '" selected>' . utf8_encode($datos['nombre']) . ' </option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
 												} else {
-													echo '<option value="' . $datos['id'] . '">' . utf8_encode($datos['nombre']) . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												}
 											?>
 										</select>
@@ -213,7 +218,7 @@ $arr_datos = $obj->version_system();
 
 									<div class="form-group">
 										<label>Documento</label>
-										<input type="text" id="dni" name="dni" class="form-control" placeholder="DNI" value="<?php echo $objUsuario['DOC']; ?>" maxlength=10 required="required">
+										<input type="text" id="dni" name="dni" class="form-control" placeholder="DNI" value="<?php echo h_usuario(isset($objUsuario['DOC']) ? $objUsuario['DOC'] : ''); ?>" maxlength=10 required="required">
 									</div>
 
 									<div class="form-group">
@@ -225,9 +230,9 @@ $arr_datos = $obj->version_system();
 											$arr_datos = $obj->consulta_tipo();
 											foreach ($arr_datos as $datos)
 												if ($datos['id'] == $objUsuario['CARGO']) {
-													echo '<option value="' . $datos['id'] . '" selected>' . utf8_encode($datos['nombre']) . ' </option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
 												} else {
-													echo '<option value="' . $datos['id'] . '">' . utf8_encode($datos['nombre']) . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												}
 											?>
 										</select>
@@ -235,14 +240,14 @@ $arr_datos = $obj->version_system();
 
 									<div class="form-group">
 										<label>Móvil</label>
-										<input type="text" id="movil" name="movil" class="form-control" placeholder="979846212" maxlength=9 required="required" value="<?php echo $objUsuario['CEL']; ?>">
+										<input type="text" id="movil" name="movil" class="form-control" placeholder="979846212" maxlength=9 required="required" value="<?php echo h_usuario(isset($objUsuario['CEL']) ? $objUsuario['CEL'] : ''); ?>">
 									</div>
 
 									<div class="form-group">
 										<label>Fecha Ingreso</label>
 										<div class="input-group">
 											<span class="input-group-addon"><i class="icon-calendar22"></i></span>
-											<input type="text" id="fechaing" name="fechaing" class="form-control pickadate" value="<?php echo $objUsuario['fecha_ing']; ?>" placeholder="1991-02-03" />
+											<input type="text" id="fechaing" name="fechaing" class="form-control pickadate" value="<?php echo h_usuario(isset($objUsuario['fecha_ing']) ? $objUsuario['fecha_ing'] : ''); ?>" placeholder="1991-02-03" />
 										</div>
 									</div>
 								</fieldset>
@@ -253,14 +258,14 @@ $arr_datos = $obj->version_system();
 									<label>Fecha Cese</label>
 									<div class="input-group">
 										<span class="input-group-addon"><i class="icon-calendar22"></i></span>
-										<input type="text" id="fechabaja" name="fechabaja" class="form-control pickadate" value="<?php echo $objUsuario['fecha_baja']; ?>" placeholder="1991-02-03" />
+										<input type="text" id="fechabaja" name="fechabaja" class="form-control pickadate" value="<?php echo h_usuario(isset($objUsuario['fecha_baja']) ? $objUsuario['fecha_baja'] : ''); ?>" placeholder="1991-02-03" />
 									</div>
 								</div>
 
 								<fieldset>
 									<div class="form-group">
 										<label>Dirección</label>
-										<input type="text" id="direccion" name="direccion" class="form-control" placeholder="Dirección" maxlength=50 required="required" value="<?php echo $objUsuario['DIRECCION']; ?>" />
+										<input type="text" id="direccion" name="direccion" class="form-control" placeholder="Dirección" maxlength=50 required="required" value="<?php echo h_usuario(isset($objUsuario['DIRECCION']) ? $objUsuario['DIRECCION'] : ''); ?>" />
 									</div>
 
 									<div class="form-group">
@@ -272,9 +277,9 @@ $arr_datos = $obj->version_system();
 											$arr_datos = $obj->departamentos();
 											foreach ($arr_datos as $datos)
 												if ($datos['id'] == $objUsuario['codDepartamento']) {
-													echo '<option value="' . $datos['id'] . '" selected>' . utf8_encode($datos['nombre']) . ' </option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
 												} else {
-													echo '<option value="' . $datos['id'] . '">' . utf8_encode($datos['nombre']) . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												}
 											?>
 										</select>
@@ -294,7 +299,7 @@ $arr_datos = $obj->version_system();
 
 									<div class="form-group">
 										<label>Referencia</label>
-										<input type="text" id="referencia" name="referencia" class="form-control" placeholder="Tottus de la Marina" required="required" value="<?php echo $objUsuario['REFDIR']; ?>" />
+										<input type="text" id="referencia" name="referencia" class="form-control" placeholder="Tottus de la Marina" required="required" value="<?php echo h_usuario(isset($objUsuario['REFDIR']) ? $objUsuario['REFDIR'] : ''); ?>" />
 									</div>
 
 									<div class="form-group">
@@ -308,12 +313,12 @@ $arr_datos = $obj->version_system();
 
 									<div class="form-group">
 										<label>Hijos</label>
-										<input type="number" min=0 id="hijos" name="hijos" class="form-control" placeholder="0" value="<?php echo $objUsuario['NUMHIJ']; ?>" />
+										<input type="number" min=0 id="hijos" name="hijos" class="form-control" placeholder="0" value="<?php echo h_usuario(isset($objUsuario['NUMHIJ']) ? $objUsuario['NUMHIJ'] : ''); ?>" />
 									</div>
 
 									<div class="form-group">
 										<label>Teléfono</label>
-										<input type="text" id="telefono" name="telefono" class="form-control" placeholder="15454562" maxlength=9 required="required" value="<?php echo $objUsuario['TLF']; ?>" />
+										<input type="text" id="telefono" name="telefono" class="form-control" placeholder="15454562" maxlength=9 required="required" value="<?php echo h_usuario(isset($objUsuario['TLF']) ? $objUsuario['TLF'] : ''); ?>" />
 									</div>
 								</fieldset>
 							</div>
@@ -322,7 +327,7 @@ $arr_datos = $obj->version_system();
 								<fieldset>
 									<div class="form-group">
 										<label>Email</label>
-										<input type="email" id="email" name="email" class="form-control" placeholder="hola@gmail.com" required="required" value="<?php echo $objUsuario['EMAIL']; ?>" />
+										<input type="email" id="email" name="email" class="form-control" placeholder="hola@gmail.com" required="required" value="<?php echo h_usuario(isset($objUsuario['EMAIL']) ? $objUsuario['EMAIL'] : ''); ?>" />
 									</div>
 
 									<div class="form-group">
@@ -334,9 +339,9 @@ $arr_datos = $obj->version_system();
 											$arr_datos = $obj->consulta_gi();
 											foreach ($arr_datos as $datos)
 												if ($datos['id'] == $objUsuario['GRADOINS']) {
-													echo '<option value="' . $datos['id'] . '" selected>' . utf8_encode($datos['nombre']) . ' </option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
 												} else {
-													echo '<option value="' . $datos['id'] . '">' . utf8_encode($datos['nombre']) . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												}
 											?>
 										</select>
@@ -351,9 +356,9 @@ $arr_datos = $obj->version_system();
 											$arr_datos = $obj->consulta_sucursal();
 											foreach ($arr_datos as $datos)
 												if ($datos['id'] == $objUsuario['IDSUCURSAL']) {
-													echo '<option value="' . $datos['id'] . '" selected>' . utf8_encode($datos['nombre']) . ' </option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
 												} else {
-													echo '<option value="' . $datos['id'] . '">' . utf8_encode($datos['nombre']) . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												}
 											?>
 										</select>
@@ -369,13 +374,30 @@ $arr_datos = $obj->version_system();
 												$arr_datos = $obj->consulta_horario();
 												foreach ($arr_datos as $datos)
 													if (isCombo($datos['id'], $objItem) == $datos['id']) {
-														echo '<option value="' . $datos['id'] . '" selected>' . ($datos['nombre']) . '</option>';
+														echo '<option value="' . h_usuario($datos['id']) . '" selected>' . h_usuario($datos['nombre']) . '</option>';
 													} else {
-														echo '<option value="' . $datos['id'] . '">' . ($datos['nombre']) . '</option>';
+														echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 													}
 												?>
 											</select>
 										</div>
+									</div>
+
+									<div class="form-group">
+										<label>Hora de almuerzo</label>
+										<select id="refrigerio" name="refrigerio" data-placeholder="Seleccione" class="select" required="required">
+											<option value=""></option>
+											<?php
+											$obj = new clsUsuario;
+											$arr_datos = $obj->consulta_refrigerio();
+											$refrigerioActual = isset($objRefrigerio['ID_REFRIGERIO']) ? (int)$objRefrigerio['ID_REFRIGERIO'] : 0;
+											foreach ($arr_datos as $datos) {
+												$selected = ((int)$datos['id'] === $refrigerioActual) ? ' selected="selected"' : '';
+												echo '<option value="' . h_usuario($datos['id']) . '"' . $selected . '>' . h_usuario($datos['nombre']) . '</option>';
+											}
+											?>
+										</select>
+										<span class="help-block text-info"><i class="icon-help position-right"></i> Campo obligatorio. Al cambiarlo se cierra la asignación anterior y se registra una nueva.</span>
 									</div>
 
 									<div class="form-group">
@@ -387,9 +409,9 @@ $arr_datos = $obj->version_system();
 											$arr_datos = $obj->carteras();
 											foreach ($arr_datos as $datos)
 												if ($datos['id'] == $objUsuario['id_cartera']) {
-													echo '<option value="' . $datos['id'] . '" selected>' . utf8_encode($datos['nombre']) . ' </option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
 												} else {
-													echo '<option value="' . $datos['id'] . '">' . utf8_encode($datos['nombre']) . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												}
 											?>
 										</select>
@@ -402,7 +424,7 @@ $arr_datos = $obj->version_system();
 
 										<div class="form-group">
 											<label>Usuario</label>
-											<input type="text" id="user" name="user" placeholder="admin" class="form-control" maxlength=15 required="required" value="<?php echo $objUsuario['USUARIO']; ?>">
+											<input type="text" id="user" name="user" placeholder="admin" class="form-control" maxlength=15 required="required" value="<?php echo h_usuario(isset($objUsuario['USUARIO']) ? $objUsuario['USUARIO'] : ''); ?>">
 										</div>
 
 										<div class="form-group">
@@ -411,10 +433,15 @@ $arr_datos = $obj->version_system();
 												<i class="icon-add" id='password-add' style='cursor: pointer'></i>
 											</div>
 											<div class="password-container">
-												<input id="password" name="password" type="password" class="form-control" placeholder="**********" required="required" value="<?php echo $objUsuario['PASSWORD']; ?>">
+												<input id="password" name="password" type="password" class="form-control"
+													placeholder="Dejar vacío para conservar la contraseña actual"
+													maxlength="20"
+													autocomplete="new-password"
+													pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$"
+													value="">
 												<i class="icon-eye8 toggle-password" id='toggle-password'></i>
 											</div>
-											<span class="help-block text-info"><i class="icon-help position-right"></i> La contraseña debe tener mínimo 8 caracteres, incluyendo mayúscula, minúscula, número y símbolo especial</span>
+											<span class="help-block text-info"><i class="icon-help position-right"></i> Déjela vacía para conservar la contraseña actual. Si escribe una nueva, debe tener mínimo 8 caracteres, incluyendo mayúscula, minúscula, número y símbolo especial</span>
 										</div>
 									</blockquote>
 								</fieldset>
@@ -555,7 +582,7 @@ $arr_datos = $obj->version_system();
 		// EYE HANDLER
 		const eyeIcon = document.getElementById('toggle-password')
 
-		eyeIcon.addEventListener('click', () => {
+		eyeIcon.addEventListener('click', function() {
 			const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
 			password.setAttribute('type', type);
 			this.classList.toggle('icon-eye8');
