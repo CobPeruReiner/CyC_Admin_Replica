@@ -7,7 +7,6 @@ function h_usuario($valor)
 }
 
 require_once("php/clsUsuario.php");
-require_once("php/clsTable.php");
 session_start();
 if (!isset($_SESSION['user_ls'])) {
 	header("Location: index.php");
@@ -191,7 +190,7 @@ $arr_datos = $obj->version_system();
 											$obj = new clsUsuario;
 											$arr_datos = $obj->consulta_tipo();
 											foreach ($arr_datos as $datos)
-												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
 									</div>
@@ -336,16 +335,18 @@ $arr_datos = $obj->version_system();
 									</div>
 
 									<div class="form-group">
-										<label>Cartera</label>
-										<select id="cartera" name="cartera" data-placeholder="Seleccione" class="select" required="required">
+										<label>Cartera <span id="cartera-obligatoria" class="text-danger" style="display:none;">*</span></label>
+										<select id="cartera" name="cartera" data-placeholder="Seleccione" class="select">
 											<option value=""></option>
+											<option value="0" selected="selected">NINGUNA CARTERA</option>
 											<?php
-											$obj = new clsTable;
-											$arr_datos = $obj->carteras();
+											$obj = new clsUsuario;
+											$arr_datos = $obj->consulta_carteras_con_grupo_vigente();
 											foreach ($arr_datos as $datos)
 												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
+										<span id="cartera-ayuda" class="help-block text-info">Opcional para el cargo seleccionado.</span>
 									</div>
 
 									<blockquote>

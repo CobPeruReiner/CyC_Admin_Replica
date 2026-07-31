@@ -2,7 +2,6 @@
 header('Content-Type: text/html; charset=utf-8');
 require_once("php/clsUsuario.php");
 require_once("php/clsSucursal.php");
-require_once("php/clsTable.php");
 session_start();
 
 function h_usuario($valor)
@@ -242,9 +241,9 @@ $arr_datos = $obj->version_system();
 											$arr_datos = $obj->consulta_tipo();
 											foreach ($arr_datos as $datos)
 												if ($datos['id'] == $objUsuario['CARGO']) {
-													echo '<option value="' . h_usuario($datos['id']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
 												} else {
-													echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												}
 											?>
 										</select>
@@ -413,20 +412,33 @@ $arr_datos = $obj->version_system();
 									</div>
 
 									<div class="form-group">
-										<label>Cartera</label>
-										<select id="cartera" name="cartera" data-placeholder="Seleccione" class="select" required="required">
+										<label>Cartera <span id="cartera-obligatoria" class="text-danger" style="display:none;">*</span></label>
+										<select id="cartera" name="cartera" data-placeholder="Seleccione" class="select">
 											<option value=""></option>
 											<?php
-											$obj = new clsTable;
-											$arr_datos = $obj->carteras();
-											foreach ($arr_datos as $datos)
-												if ($datos['id'] == $objUsuario['id_cartera']) {
-													echo '<option value="' . h_usuario($datos['id']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
-												} else {
-													echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
+											$carteraActual = isset($objUsuario['id_cartera']) ? (int)$objUsuario['id_cartera'] : 0;
+											echo '<option value="0"' . ($carteraActual === 0 ? ' selected="selected"' : '') . '>NINGUNA CARTERA</option>';
+
+											$obj = new clsUsuario;
+											$arr_datos = $obj->consulta_carteras_con_grupo_vigente();
+											$carteraActualEncontrada = false;
+											foreach ($arr_datos as $datos) {
+												$seleccionada = ((int)$datos['id'] === $carteraActual);
+												if ($seleccionada) {
+													$carteraActualEncontrada = true;
 												}
+												echo '<option value="' . h_usuario($datos['id']) . '"' . ($seleccionada ? ' selected="selected"' : '') . '>' . h_usuario($datos['nombre']) . '</option>';
+											}
+
+											if ($carteraActual > 0 && !$carteraActualEncontrada) {
+												$datosCarteraActual = clsUsuario::consulta_cartera_por_id($carteraActual);
+												if (!empty($datosCarteraActual)) {
+													echo '<option value="' . h_usuario($datosCarteraActual['id']) . '" selected="selected">' . h_usuario($datosCarteraActual['nombre']) . ' | ASIGNACIÓN ACTUAL SIN GRUPO VIGENTE</option>';
+												}
+											}
 											?>
 										</select>
+										<span id="cartera-ayuda" class="help-block text-info">Opcional para el cargo seleccionado.</span>
 									</div>
 
 									<blockquote>

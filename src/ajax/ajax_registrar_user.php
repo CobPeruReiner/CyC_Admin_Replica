@@ -151,7 +151,6 @@ $camposRequeridos = array(
 	'email',
 	'gi',
 	'suc',
-	'cartera',
 	'fechaing',
 	'refrigerio'
 );
@@ -239,8 +238,16 @@ if (!password_segura_registro($password)) {
 	responder_registro(6, 'La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula, número y símbolo especial');
 }
 
-if ($sexo <= 0 || $estadoCivil <= 0 || $cargo <= 0 || $gradoInstruccion <= 0 || $sucursal <= 0 || $cartera <= 0 || $refrigerio <= 0) {
+if ($sexo <= 0 || $estadoCivil <= 0 || $cargo <= 0 || $gradoInstruccion <= 0 || $sucursal <= 0 || $refrigerio <= 0) {
 	responder_registro(8, 'Uno o más campos de selección son inválidos');
+}
+
+if (clsUsuario::cargo_requiere_cartera($cargo) && $cartera <= 0) {
+	responder_registro(8, 'Debe seleccionar una cartera para el cargo elegido');
+}
+
+if ($cartera > 0 && !clsUsuario::validar_cartera_con_grupo_vigente($cartera)) {
+	responder_registro(8, 'La cartera seleccionada no tiene un grupo, responsable y tabla vigentes');
 }
 
 if (!clsUsuario::validar_refrigerio($refrigerio)) {

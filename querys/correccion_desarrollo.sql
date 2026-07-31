@@ -18,6 +18,8 @@ where
 	estado = 1
 GROUP by
 	nombre;
+	
+SELECT * FROM cargo tb1 WHERE tb1.estado = 1;
 
 -- ========================= MENU ========================
 -- INSERT INTO

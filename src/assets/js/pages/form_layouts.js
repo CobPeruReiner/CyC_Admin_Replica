@@ -1,3 +1,67 @@
+function formularioUsuarioCartera() {
+  return jQuery(".form-user, .form-m-user").first();
+}
+
+function cargoUsuarioRequiereCartera() {
+  var $formulario = formularioUsuarioCartera();
+
+  if ($formulario.length === 0) {
+    return false;
+  }
+
+  var valor = $formulario
+    .find("#cargo option:selected")
+    .attr("data-requiere-cartera");
+  return String(valor) === "1";
+}
+
+function actualizarCarteraUsuario() {
+  var $formulario = formularioUsuarioCartera();
+  var $cargo = $formulario.find("#cargo");
+  var $cartera = $formulario.find("#cartera");
+
+  if (
+    $formulario.length === 0 ||
+    $cargo.length === 0 ||
+    $cartera.length === 0
+  ) {
+    return;
+  }
+
+  var requiereCartera = cargoUsuarioRequiereCartera();
+  var valorCartera = jQuery.trim(String($cartera.val() || ""));
+
+  $cartera.prop("required", requiereCartera);
+  jQuery("#cartera-obligatoria").toggle(requiereCartera);
+  jQuery("#cartera-ayuda").text(
+    requiereCartera
+      ? "Campo obligatorio para el cargo seleccionado."
+      : "Campo opcional para el cargo seleccionado.",
+  );
+
+  if (requiereCartera && parseInt(valorCartera, 10) <= 0) {
+    $cartera.val("").trigger("change.select2");
+  } else if (!requiereCartera && valorCartera === "") {
+    $cartera.val("0").trigger("change.select2");
+  }
+}
+
+function validarCarteraUsuario(cartera) {
+  if (
+    cargoUsuarioRequiereCartera() &&
+    (!cartera || parseInt(cartera, 10) <= 0)
+  ) {
+    swal({
+      title: "Mensaje del Sistema",
+      text: "Debe seleccionar una cartera para el cargo elegido.",
+      type: "warning",
+    });
+    return false;
+  }
+
+  return true;
+}
+
 function obtenerFechaSqlUsuario(selector) {
   var $campo = jQuery(selector);
   var valor = jQuery.trim($campo.val() || "");
@@ -48,6 +112,11 @@ function obtenerFechaSqlUsuario(selector) {
 $(function () {
   // Basic
   $(".select").select2();
+
+  formularioUsuarioCartera()
+    .find("#cargo")
+    .on("change", actualizarCarteraUsuario);
+  actualizarCarteraUsuario();
 
   // Format icon
   function iconFormat(icon) {
@@ -252,6 +321,15 @@ $(function () {
       var user = jQuery("#user").val();
       var gi = jQuery("#gi").val();
       var cartera = jQuery("#cartera").val();
+
+      if (!validarCarteraUsuario(cartera)) {
+        return;
+      }
+
+      if (!cartera) {
+        cartera = "0";
+      }
+
       var password = jQuery("#password").val();
       var arr_items = $(".multiselect").val();
       var refrigerio = jQuery("#refrigerio").val();
@@ -1208,6 +1286,14 @@ $(function () {
 
       var estado = $("#estado").is(":checked");
       var cartera = jQuery("#cartera").val();
+
+      if (!validarCarteraUsuario(cartera)) {
+        return;
+      }
+
+      if (!cartera) {
+        cartera = "0";
+      }
 
       if (estado === true || estado == true) {
         estado = "1";

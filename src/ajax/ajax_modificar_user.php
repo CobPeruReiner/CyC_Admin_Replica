@@ -151,7 +151,6 @@ $camposRequeridos = array(
 	'email',
 	'gi',
 	'suc',
-	'cartera',
 	'fechaing',
 	'refrigerio'
 );
@@ -198,6 +197,12 @@ $idUsuarioModifica = (int)$_SESSION['id_ls'];
 if ($idPersonal <= 0) {
 	responder_modificacion(8, 'Identificador de personal inválido');
 }
+
+$datosPersonalActual = clsUsuario::select_user($idPersonal);
+if (empty($datosPersonalActual)) {
+	responder_modificacion(8, 'El personal indicado no existe');
+}
+$carteraActual = isset($datosPersonalActual['id_cartera']) ? (int)$datosPersonalActual['id_cartera'] : 0;
 
 $textosUtf8 = array(
 	'apellidos' => $apellidos,
@@ -261,8 +266,20 @@ if ($password !== '' && clsUsuario::verificar_password($password, $idPersonal)) 
 	responder_modificacion(7, 'La nueva contraseña no puede coincidir con una de las últimas contraseñas utilizadas');
 }
 
-if ($sexo <= 0 || $estadoCivil <= 0 || $cargo <= 0 || $gradoInstruccion <= 0 || $sucursal <= 0 || $cartera <= 0 || $refrigerio <= 0) {
+if ($sexo <= 0 || $estadoCivil <= 0 || $cargo <= 0 || $gradoInstruccion <= 0 || $sucursal <= 0 || $refrigerio <= 0) {
 	responder_modificacion(8, 'Uno o más campos de selección son inválidos');
+}
+
+if (clsUsuario::cargo_requiere_cartera($cargo) && $cartera <= 0) {
+	responder_modificacion(8, 'Debe seleccionar una cartera para el cargo elegido');
+}
+
+if (
+	$cartera > 0 &&
+	$cartera !== $carteraActual &&
+	!clsUsuario::validar_cartera_con_grupo_vigente($cartera)
+) {
+	responder_modificacion(8, 'La cartera seleccionada no tiene un grupo, responsable y tabla vigentes');
 }
 
 if (!clsUsuario::validar_refrigerio($refrigerio)) {

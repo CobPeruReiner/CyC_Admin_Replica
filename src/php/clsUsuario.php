@@ -24,6 +24,16 @@ class clsUsuario
 		error_log($contexto . ': ' . mysql_error());
 	}
 
+	public static function cargos_con_cartera_obligatoria()
+	{
+		return array(11, 14, 15, 16, 23);
+	}
+
+	public static function cargo_requiere_cartera($idCargo)
+	{
+		return in_array((int)$idCargo, self::cargos_con_cartera_obligatoria(), true);
+	}
+
 
 	public static function changelog()
 	{
@@ -82,7 +92,11 @@ class clsUsuario
 
 		if ($res) {
 			while ($row = mysql_fetch_assoc($res)) {
-				$arr_datos[] = array("id" => $row["id"], "nombre" => $row["nombre"]);
+				$arr_datos[] = array(
+					"id" => $row["id"],
+					"nombre" => $row["nombre"],
+					"requiere_cartera" => self::cargo_requiere_cartera($row["id"]) ? 1 : 0
+				);
 			}
 		} else {
 			self::registrar_error_mysql('consulta_tipo');
@@ -209,6 +223,120 @@ class clsUsuario
 			}
 		} else {
 			self::registrar_error_mysql('consulta_horario');
+		}
+
+		$objConx->desconectar();
+		return $arr_datos;
+	}
+
+
+	public static function consulta_carteras_con_grupo_vigente()
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		/*
+		 * Una cartera se considera disponible cuando tiene por lo menos un
+		 * grupo activo, un responsable vigente asociado a ese grupo y una
+		 * tabla vigente (tabla_log.estado = 0).
+		 */
+		$sql = "SELECT
+				c.id AS id,
+				CONCAT(
+					c.cartera,
+					' | Grupo(s): ',
+					GROUP_CONCAT(DISTINCT cg.nombre_grupo ORDER BY cg.nombre_grupo SEPARATOR ', ')
+				) AS nombre
+			FROM cartera c
+			INNER JOIN CARTERA_GRUPO cg
+				ON cg.id_cartera = c.id
+				AND cg.activo = 1
+			INNER JOIN CARTERA_RESPONSABLE cr
+				ON cr.id_cartera = c.id
+				AND cr.id_grupo_cartera = cg.id
+				AND cr.activo = 1
+				AND (cr.fecha_inicio IS NULL OR cr.fecha_inicio <= NOW())
+				AND (cr.fecha_fin IS NULL OR cr.fecha_fin > NOW())
+			INNER JOIN tabla_log tl
+				ON tl.id = cr.id_tabla
+				AND tl.id_cartera = c.id
+				AND tl.estado = 0
+			WHERE c.estado = 1
+			GROUP BY c.id, c.cartera
+			ORDER BY c.cartera";
+
+		$res = mysql_query($sql);
+		$arr_datos = array();
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array("id" => $row["id"], "nombre" => $row["nombre"]);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_carteras_con_grupo_vigente');
+		}
+
+		$objConx->desconectar();
+		return $arr_datos;
+	}
+
+	public static function validar_cartera_con_grupo_vigente($idCartera)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$idCartera = (int)$idCartera;
+		if ($idCartera <= 0) {
+			$objConx->desconectar();
+			return false;
+		}
+
+		$sql = "SELECT 1
+			FROM cartera c
+			INNER JOIN CARTERA_GRUPO cg
+				ON cg.id_cartera = c.id
+				AND cg.activo = 1
+			INNER JOIN CARTERA_RESPONSABLE cr
+				ON cr.id_cartera = c.id
+				AND cr.id_grupo_cartera = cg.id
+				AND cr.activo = 1
+				AND (cr.fecha_inicio IS NULL OR cr.fecha_inicio <= NOW())
+				AND (cr.fecha_fin IS NULL OR cr.fecha_fin > NOW())
+			INNER JOIN tabla_log tl
+				ON tl.id = cr.id_tabla
+				AND tl.id_cartera = c.id
+				AND tl.estado = 0
+			WHERE c.id = $idCartera
+				AND c.estado = 1
+			LIMIT 1";
+
+		$res = mysql_query($sql);
+		$valida = $res && mysql_num_rows($res) === 1;
+
+		if (!$res) {
+			self::registrar_error_mysql('validar_cartera_con_grupo_vigente');
+		}
+
+		$objConx->desconectar();
+		return $valida;
+	}
+
+	public static function consulta_cartera_por_id($idCartera)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$idCartera = (int)$idCartera;
+		$res = mysql_query("SELECT id, cartera AS nombre FROM cartera WHERE id=$idCartera LIMIT 1");
+		$arr_datos = array();
+
+		if ($res && ($row = mysql_fetch_assoc($res))) {
+			$arr_datos = array("id" => $row["id"], "nombre" => $row["nombre"]);
+		} elseif (!$res) {
+			self::registrar_error_mysql('consulta_cartera_por_id');
 		}
 
 		$objConx->desconectar();
@@ -361,8 +489,15 @@ class clsUsuario
 		$cartera = (int)$cartera;
 		$IDREFRIGERIO = (int)$IDREFRIGERIO;
 		$USUARIO_REGISTRO = (int)$USUARIO_REGISTRO;
+		$carteraSql = $cartera > 0 ? (string)$cartera : '0';
 
-		if ($IDREFRIGERIO <= 0 || $USUARIO_REGISTRO <= 0 || !is_array($HORARIOS) || count($HORARIOS) === 0) {
+		if (
+			$IDREFRIGERIO <= 0 ||
+			$USUARIO_REGISTRO <= 0 ||
+			!is_array($HORARIOS) ||
+			count($HORARIOS) === 0 ||
+			(self::cargo_requiere_cartera($CARGO) && $cartera <= 0)
+		) {
 			$objConx->desconectar();
 			return false;
 		}
@@ -416,7 +551,7 @@ class clsUsuario
 			$ESTCIV, $CARFAM, $NUMHIJ, '$DIRECCION', '$DISTRITO', '$DPTO',
 			'$REFDIR', '$TLF', '$CEL', '$EMAIL', $GRADOINS, $CARGO,
 			$IDSUCURSAL, UPPER('$USUARIO'), '$passwordHash', 1,
-			'$fecha', '0000-00-00', $cartera, NULL, '$FECHAING',
+			'$fecha', '0000-00-00', $carteraSql, NULL, '$FECHAING',
 			'HUMANO', NULL, @anexo
 		)";
 
@@ -820,23 +955,12 @@ class clsUsuario
 			'********' AS password,
 			b.USUARIO AS user,
 			c.nombre AS tipo,
-			car.cartera AS cartera,
+			COALESCE(car.cartera, 'NINGUNA CARTERA') AS cartera,
 			IF(b.IDESTADO=1, '<label>ACTIVE</label>', '<label>SUSPENDED</label>') AS estado,
 			'' AS opciones
 		FROM personal b
 		LEFT JOIN cargo c ON c.id=b.CARGO
 		LEFT JOIN cartera car ON b.id_cartera=car.id
-		WHERE b.id_cartera IN (80,65,40)
-			OR EXISTS (
-				SELECT 1
-				FROM asignacion_tabla at
-				INNER JOIN tabla_log tl ON at.id_tabla = tl.id
-				INNER JOIN cartera ca ON tl.id_cartera = ca.id
-				WHERE at.id_usuario = b.IDPERSONAL
-					AND ca.estado = 1
-					AND tl.estado = 0
-					AND ca.id IN (80,65,40)
-			)
 		ORDER BY b.IDPERSONAL DESC";
 
 		$res = mysql_query($sql);
@@ -1028,8 +1152,14 @@ class clsUsuario
 		$cartera = (int)$cartera;
 		$idUsuarioModifica = (int)$idUsuarioModifica;
 		$IDREFRIGERIO = (int)$IDREFRIGERIO;
+		$carteraSql = $cartera > 0 ? (string)$cartera : '0';
 
-		if ($id <= 0 || $IDREFRIGERIO <= 0 || $idUsuarioModifica <= 0) {
+		if (
+			$id <= 0 ||
+			$IDREFRIGERIO <= 0 ||
+			$idUsuarioModifica <= 0 ||
+			(self::cargo_requiere_cartera($CARGO) && $cartera <= 0)
+		) {
 			$objConx->desconectar();
 			return false;
 		}
@@ -1094,7 +1224,7 @@ class clsUsuario
 			IDSUCURSAL=$IDSUCURSAL,
 			USUARIO=UPPER('$USUARIO'),
 			fecha_baja='$FECHABAJA',
-			id_cartera=$cartera,
+			id_cartera=$carteraSql,
 			fecha_ing='$FECHAING'
 			$passwordSql
 		WHERE IDPERSONAL=$id";
