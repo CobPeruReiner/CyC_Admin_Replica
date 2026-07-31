@@ -629,10 +629,6 @@ class clsUsuario
 
 	public static function registrar_empleado($APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $idGrupoCartera, $FECHAING, $IDREFRIGERIO = 0, $USUARIO_REGISTRO = 0, $HORARIOS = array())
 	{
-		$objConx = new clsConexion();
-		$objConx->conectar();
-		self::configurar_conexion_utf8();
-
 		/* Compatibilidad: si alguna llamada antigua no envía id_grupo_cartera,
 		 * el parámetro recibido aquí será la fecha de ingreso. En ese caso
 		 * se desplazan los argumentos y el grupo queda en 0.
@@ -671,9 +667,16 @@ class clsUsuario
 			($cartera > 0 && !self::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) ||
 			($cartera <= 0 && $idGrupoCartera !== 0)
 		) {
-			$objConx->desconectar();
 			return false;
 		}
+
+		/* La validación de cartera abre y cierra su propia conexión.
+		 * Abrimos la conexión transaccional después para evitar que mysql_*
+		 * reutilice y cierre el mismo enlace.
+		 */
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
 
 		$APELLIDOS = self::escapar(trim($APELLIDOS));
 		$NOMBRES = self::escapar(trim($NOMBRES));
@@ -1310,10 +1313,6 @@ class clsUsuario
 		$IDREFRIGERIO = 0,
 		$HORARIOS = null
 	) {
-		$objConx = new clsConexion();
-		$objConx->conectar();
-		self::configurar_conexion_utf8();
-
 		/* Compatibilidad: si alguna llamada antigua no envía id_grupo_cartera,
 		 * el parámetro recibido aquí será la fecha de ingreso. En ese caso
 		 * se desplazan los argumentos y el grupo queda en 0.
@@ -1354,9 +1353,16 @@ class clsUsuario
 			($cartera > 0 && !self::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) ||
 			($cartera <= 0 && $idGrupoCartera !== 0)
 		) {
-			$objConx->desconectar();
 			return false;
 		}
+
+		/* La validación de cartera abre y cierra su propia conexión.
+		 * Abrimos la conexión transaccional después para evitar que mysql_*
+		 * reutilice y cierre el mismo enlace.
+		 */
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
 
 		$APELLIDOS = self::escapar(trim($APELLIDOS));
 		$NOMBRES = self::escapar(trim($NOMBRES));
