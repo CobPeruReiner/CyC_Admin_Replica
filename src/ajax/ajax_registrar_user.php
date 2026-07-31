@@ -188,6 +188,10 @@ $gradoInstruccion = entero_post_registro('gi');
 $cargo = entero_post_registro('cargo');
 $sucursal = entero_post_registro('suc');
 $cartera = entero_post_registro('cartera');
+$idGrupoCartera = entero_post_registro('id_grupo_cartera');
+if ($cartera <= 0) {
+	$idGrupoCartera = 0;
+}
 $refrigerio = entero_post_registro('refrigerio');
 $idUsuarioRegistro = (int)$_SESSION['id_ls'];
 
@@ -246,8 +250,12 @@ if (clsUsuario::cargo_requiere_cartera($cargo) && $cartera <= 0) {
 	responder_registro(8, 'Debe seleccionar una cartera para el cargo elegido');
 }
 
-if ($cartera > 0 && !clsUsuario::validar_cartera_con_grupo_vigente($cartera)) {
-	responder_registro(8, 'La cartera seleccionada no tiene un grupo, responsable y tabla vigentes');
+if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera)) {
+	responder_registro(8, 'Debe seleccionar un grupo válido para la cartera elegida');
+}
+
+if ($cartera > 0 && !clsUsuario::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) {
+	responder_registro(8, 'La cartera seleccionada no tiene responsables oficiales vigentes para permisos');
 }
 
 if (!clsUsuario::validar_refrigerio($refrigerio)) {
@@ -303,6 +311,7 @@ $idPersonal = clsUsuario::registrar_empleado(
 	$usuario,
 	$password,
 	$cartera,
+	$idGrupoCartera,
 	$fechaIngreso,
 	$refrigerio,
 	$idUsuarioRegistro,

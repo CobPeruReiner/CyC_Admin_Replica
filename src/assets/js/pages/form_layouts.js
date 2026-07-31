@@ -15,10 +15,55 @@ function cargoUsuarioRequiereCartera() {
   return String(valor) === "1";
 }
 
+function carteraUsuarioTieneGrupos() {
+  var $formulario = formularioUsuarioCartera();
+  var $carteraSeleccionada = $formulario.find("#cartera option:selected");
+  return String($carteraSeleccionada.attr("data-tiene-grupos") || "0") === "1";
+}
+
+function filtrarGruposCarteraUsuario() {
+  var $formulario = formularioUsuarioCartera();
+  var $cartera = $formulario.find("#cartera");
+  var $grupo = $formulario.find("#id_grupo_cartera");
+
+  if ($cartera.length === 0 || $grupo.length === 0) {
+    return;
+  }
+
+  var idCartera = jQuery.trim(String($cartera.val() || "0"));
+  var tieneGrupos = carteraUsuarioTieneGrupos();
+  var valorActual = jQuery.trim(String($grupo.val() || "0"));
+  var valorExiste = valorActual === "0";
+
+  $grupo.find("option").each(function () {
+    var $opcion = jQuery(this);
+    var idCarteraOpcion = String($opcion.attr("data-id-cartera") || "0");
+    var mostrar = idCarteraOpcion === "0" || (tieneGrupos && idCarteraOpcion === idCartera);
+
+    $opcion.prop("disabled", !mostrar);
+    if (mostrar && String($opcion.val()) === valorActual) {
+      valorExiste = true;
+    }
+  });
+
+  if (!tieneGrupos) {
+    $grupo.val("0");
+  } else if (!valorExiste || valorActual === "0") {
+    var primerGrupo = $grupo
+      .find('option[data-id-cartera="' + idCartera + '"]:enabled')
+      .first()
+      .val();
+    $grupo.val(primerGrupo || "0");
+  }
+
+  $grupo.trigger("change.select2");
+}
+
 function actualizarCarteraUsuario() {
   var $formulario = formularioUsuarioCartera();
   var $cargo = $formulario.find("#cargo");
   var $cartera = $formulario.find("#cartera");
+  var $grupo = $formulario.find("#id_grupo_cartera");
 
   if (
     $formulario.length === 0 ||
@@ -30,23 +75,36 @@ function actualizarCarteraUsuario() {
 
   var requiereCartera = cargoUsuarioRequiereCartera();
   var valorCartera = jQuery.trim(String($cartera.val() || ""));
+  var tieneGrupos = carteraUsuarioTieneGrupos();
 
   $cartera.prop("required", requiereCartera);
   jQuery("#cartera-obligatoria").toggle(requiereCartera);
   jQuery("#cartera-ayuda").text(
     requiereCartera
-      ? "Campo obligatorio para el cargo seleccionado."
-      : "Campo opcional para el cargo seleccionado.",
+      ? "Campo obligatorio para el cargo seleccionado. Define la cartera principal para permisos."
+      : "Campo opcional. Si se selecciona, define la cartera principal para permisos.",
   );
 
   if (requiereCartera && parseInt(valorCartera, 10) <= 0) {
     $cartera.val("").trigger("change.select2");
+    valorCartera = "";
+    tieneGrupos = false;
   } else if (!requiereCartera && valorCartera === "") {
     $cartera.val("0").trigger("change.select2");
+    valorCartera = "0";
+    tieneGrupos = false;
+  }
+
+  filtrarGruposCarteraUsuario();
+
+  jQuery("#grupo-cartera-contenedor").toggle(tieneGrupos);
+  jQuery("#grupo-cartera-obligatorio").toggle(tieneGrupos);
+  if ($grupo.length > 0) {
+    $grupo.prop("required", tieneGrupos);
   }
 }
 
-function validarCarteraUsuario(cartera) {
+function validarCarteraUsuario(cartera, idGrupoCartera) {
   if (
     cargoUsuarioRequiereCartera() &&
     (!cartera || parseInt(cartera, 10) <= 0)
@@ -54,6 +112,15 @@ function validarCarteraUsuario(cartera) {
     swal({
       title: "Mensaje del Sistema",
       text: "Debe seleccionar una cartera para el cargo elegido.",
+      type: "warning",
+    });
+    return false;
+  }
+
+  if (carteraUsuarioTieneGrupos() && parseInt(idGrupoCartera || "0", 10) <= 0) {
+    swal({
+      title: "Mensaje del Sistema",
+      text: "Debe seleccionar el grupo de cartera para la cartera segmentada.",
       type: "warning",
     });
     return false;
@@ -114,7 +181,7 @@ $(function () {
   $(".select").select2();
 
   formularioUsuarioCartera()
-    .find("#cargo")
+    .find("#cargo, #cartera")
     .on("change", actualizarCarteraUsuario);
   actualizarCarteraUsuario();
 
@@ -321,13 +388,18 @@ $(function () {
       var user = jQuery("#user").val();
       var gi = jQuery("#gi").val();
       var cartera = jQuery("#cartera").val();
+      var id_grupo_cartera = jQuery("#id_grupo_cartera").val() || "0";
 
-      if (!validarCarteraUsuario(cartera)) {
+      if (!validarCarteraUsuario(cartera, id_grupo_cartera)) {
         return;
       }
 
       if (!cartera) {
         cartera = "0";
+      }
+
+      if (parseInt(cartera, 10) <= 0) {
+        id_grupo_cartera = "0";
       }
 
       var password = jQuery("#password").val();
@@ -360,6 +432,7 @@ $(function () {
             password,
             gi,
             cartera,
+            id_grupo_cartera,
             fechaing,
           );
         }
@@ -1286,13 +1359,18 @@ $(function () {
 
       var estado = $("#estado").is(":checked");
       var cartera = jQuery("#cartera").val();
+      var id_grupo_cartera = jQuery("#id_grupo_cartera").val() || "0";
 
-      if (!validarCarteraUsuario(cartera)) {
+      if (!validarCarteraUsuario(cartera, id_grupo_cartera)) {
         return;
       }
 
       if (!cartera) {
         cartera = "0";
+      }
+
+      if (parseInt(cartera, 10) <= 0) {
+        id_grupo_cartera = "0";
       }
 
       if (estado === true || estado == true) {
@@ -1331,6 +1409,7 @@ $(function () {
             password,
             gi,
             cartera,
+            id_grupo_cartera,
             fechaing,
             fechabaja,
           );
@@ -2209,6 +2288,7 @@ function registrar(
   password,
   gi,
   cartera,
+  id_grupo_cartera,
   fechaing,
 ) {
   $.ajax({
@@ -2237,6 +2317,7 @@ function registrar(
       password: password,
       gi: gi,
       cartera: cartera,
+      id_grupo_cartera: id_grupo_cartera,
       fechaing: fechaing,
     },
     dataType: "json",
@@ -3149,6 +3230,7 @@ function modificar(
   password,
   gi,
   cartera,
+  id_grupo_cartera,
   fechaing,
   fechabaja,
 ) {
@@ -3182,6 +3264,7 @@ function modificar(
       password: password,
       gi: gi,
       cartera: cartera,
+      id_grupo_cartera: id_grupo_cartera,
       fechaing: fechaing,
       fechabaja: fechabaja,
     },

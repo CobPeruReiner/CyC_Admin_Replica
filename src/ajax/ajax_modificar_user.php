@@ -191,6 +191,10 @@ $gradoInstruccion = entero_post_modificacion('gi');
 $cargo = entero_post_modificacion('cargo');
 $sucursal = entero_post_modificacion('suc');
 $cartera = entero_post_modificacion('cartera');
+$idGrupoCartera = entero_post_modificacion('id_grupo_cartera');
+if ($cartera <= 0) {
+	$idGrupoCartera = 0;
+}
 $refrigerio = entero_post_modificacion('refrigerio');
 $idUsuarioModifica = (int)$_SESSION['id_ls'];
 
@@ -203,6 +207,7 @@ if (empty($datosPersonalActual)) {
 	responder_modificacion(8, 'El personal indicado no existe');
 }
 $carteraActual = isset($datosPersonalActual['id_cartera']) ? (int)$datosPersonalActual['id_cartera'] : 0;
+$grupoCarteraActual = isset($datosPersonalActual['id_grupo_cartera']) ? (int)$datosPersonalActual['id_grupo_cartera'] : 0;
 
 $textosUtf8 = array(
 	'apellidos' => $apellidos,
@@ -274,12 +279,12 @@ if (clsUsuario::cargo_requiere_cartera($cargo) && $cartera <= 0) {
 	responder_modificacion(8, 'Debe seleccionar una cartera para el cargo elegido');
 }
 
-if (
-	$cartera > 0 &&
-	$cartera !== $carteraActual &&
-	!clsUsuario::validar_cartera_con_grupo_vigente($cartera)
-) {
-	responder_modificacion(8, 'La cartera seleccionada no tiene un grupo, responsable y tabla vigentes');
+if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera)) {
+	responder_modificacion(8, 'Debe seleccionar un grupo válido para la cartera elegida');
+}
+
+if ($cartera > 0 && !clsUsuario::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) {
+	responder_modificacion(8, 'La cartera seleccionada no tiene responsables oficiales vigentes para permisos');
 }
 
 if (!clsUsuario::validar_refrigerio($refrigerio)) {
@@ -339,6 +344,7 @@ $actualizado = clsUsuario::update_empleado(
 	$usuario,
 	$passwordActualizar,
 	$cartera,
+	$idGrupoCartera,
 	$fechaIngreso,
 	$fechaBaja,
 	$idUsuarioModifica,

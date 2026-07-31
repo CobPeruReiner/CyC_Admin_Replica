@@ -338,15 +338,29 @@ $arr_datos = $obj->version_system();
 										<label>Cartera <span id="cartera-obligatoria" class="text-danger" style="display:none;">*</span></label>
 										<select id="cartera" name="cartera" data-placeholder="Seleccione" class="select">
 											<option value=""></option>
-											<option value="0" selected="selected">NINGUNA CARTERA</option>
+											<option value="0" data-tiene-grupos="0" selected="selected">NINGUNA CARTERA</option>
 											<?php
 											$obj = new clsUsuario;
-											$arr_datos = $obj->consulta_carteras_con_grupo_vigente();
+											$arr_datos = $obj->consulta_carteras_responsables_vigentes();
 											foreach ($arr_datos as $datos)
-												echo '<option value="' . h_usuario($datos['id']) . '">' . h_usuario($datos['nombre']) . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '" data-tiene-grupos="' . h_usuario($datos['tiene_grupos']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
 										<span id="cartera-ayuda" class="help-block text-info">Opcional para el cargo seleccionado.</span>
+									</div>
+
+									<div class="form-group" id="grupo-cartera-contenedor" style="display:none;">
+										<label>Grupo de cartera <span id="grupo-cartera-obligatorio" class="text-danger" style="display:none;">*</span></label>
+										<select id="id_grupo_cartera" name="id_grupo_cartera" data-placeholder="Seleccione" class="select">
+											<option value="0" data-id-cartera="0" selected="selected">SIN GRUPO</option>
+											<?php
+											$obj = new clsUsuario;
+											$arr_grupos = $obj->consulta_grupos_cartera_activos();
+											foreach ($arr_grupos as $grupo)
+												echo '<option value="' . h_usuario($grupo['id']) . '" data-id-cartera="' . h_usuario($grupo['id_cartera']) . '">' . h_usuario($grupo['nombre']) . '</option>';
+											?>
+										</select>
+										<span id="grupo-cartera-ayuda" class="help-block text-info">Solo aplica para carteras segmentadas, como Scotiabank.</span>
 									</div>
 
 									<blockquote>

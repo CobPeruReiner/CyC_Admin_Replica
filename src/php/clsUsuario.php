@@ -230,39 +230,53 @@ class clsUsuario
 	}
 
 
-	public static function consulta_carteras_con_grupo_vigente()
+	public static function consulta_carteras_responsables_vigentes()
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
 		self::configurar_conexion_utf8();
 
 		/*
-		 * Una cartera se considera disponible cuando tiene por lo menos un
-		 * grupo activo, un responsable vigente asociado a ese grupo y una
-		 * tabla vigente (tabla_log.estado = 0).
+		 * Modelo de permisos:
+		 * - La cartera se muestra si está activa y tiene responsables oficiales vigentes.
+		 * - No se exige CARTERA_GRUPO para carteras normales.
+		 * - No se exige tabla_log, porque hay carteras válidas sin tabla operativa.
+		 * - CARTERA_GRUPO solo aplica a carteras segmentadas, como Scotiabank.
 		 */
 		$sql = "SELECT
 				c.id AS id,
-				CONCAT(
-					c.cartera,
-					' | Grupo(s): ',
-					GROUP_CONCAT(DISTINCT cg.nombre_grupo ORDER BY cg.nombre_grupo SEPARATOR ', ')
-				) AS nombre
+				CASE
+					WHEN COUNT(DISTINCT cg.id) > 0 THEN CONCAT(
+						c.cartera,
+						' | Grupo(s): ',
+						GROUP_CONCAT(DISTINCT cg.nombre_grupo ORDER BY cg.nombre_grupo SEPARATOR ', ')
+					)
+					ELSE c.cartera
+				END AS nombre,
+				CASE WHEN COUNT(DISTINCT cg.id) > 0 THEN 1 ELSE 0 END AS tiene_grupos
 			FROM cartera c
-			INNER JOIN CARTERA_GRUPO cg
+			LEFT JOIN CARTERA_GRUPO cg
 				ON cg.id_cartera = c.id
 				AND cg.activo = 1
-			INNER JOIN CARTERA_RESPONSABLE cr
-				ON cr.id_cartera = c.id
-				AND cr.id_grupo_cartera = cg.id
-				AND cr.activo = 1
-				AND (cr.fecha_inicio IS NULL OR cr.fecha_inicio <= NOW())
-				AND (cr.fecha_fin IS NULL OR cr.fecha_fin > NOW())
-			INNER JOIN tabla_log tl
-				ON tl.id = cr.id_tabla
-				AND tl.id_cartera = c.id
-				AND tl.estado = 0
 			WHERE c.estado = 1
+			  AND EXISTS (
+				SELECT 1
+				FROM CARTERA_RESPONSABLE crs
+				WHERE crs.id_cartera = c.id
+				  AND crs.tipo_responsable = 'SUPERVISOR'
+				  AND crs.activo = 1
+				  AND (crs.fecha_inicio IS NULL OR crs.fecha_inicio <= NOW())
+				  AND (crs.fecha_fin IS NULL OR crs.fecha_fin > NOW())
+			  )
+			  AND EXISTS (
+				SELECT 1
+				FROM CARTERA_RESPONSABLE crj
+				WHERE crj.id_cartera = c.id
+				  AND crj.tipo_responsable = 'JEFE_OPERACION'
+				  AND crj.activo = 1
+				  AND (crj.fecha_inicio IS NULL OR crj.fecha_inicio <= NOW())
+				  AND (crj.fecha_fin IS NULL OR crj.fecha_fin > NOW())
+			  )
 			GROUP BY c.id, c.cartera
 			ORDER BY c.cartera";
 
@@ -271,17 +285,57 @@ class clsUsuario
 
 		if ($res) {
 			while ($row = mysql_fetch_assoc($res)) {
-				$arr_datos[] = array("id" => $row["id"], "nombre" => $row["nombre"]);
+				$arr_datos[] = array(
+					"id" => $row["id"],
+					"nombre" => $row["nombre"],
+					"tiene_grupos" => (int)$row["tiene_grupos"]
+				);
 			}
 		} else {
-			self::registrar_error_mysql('consulta_carteras_con_grupo_vigente');
+			self::registrar_error_mysql('consulta_carteras_responsables_vigentes');
 		}
 
 		$objConx->desconectar();
 		return $arr_datos;
 	}
 
-	public static function validar_cartera_con_grupo_vigente($idCartera)
+	public static function consulta_carteras_con_grupo_vigente()
+	{
+		/* Compatibilidad con llamadas antiguas. Ya no significa "con grupo". */
+		return self::consulta_carteras_responsables_vigentes();
+	}
+
+	public static function consulta_grupos_cartera_activos()
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$sql = "SELECT id, id_cartera, nombre_grupo
+			FROM CARTERA_GRUPO
+			WHERE activo = 1
+			ORDER BY id_cartera, nombre_grupo";
+
+		$res = mysql_query($sql);
+		$arr_datos = array();
+
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array(
+					"id" => $row["id"],
+					"id_cartera" => $row["id_cartera"],
+					"nombre" => $row["nombre_grupo"]
+				);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_grupos_cartera_activos');
+		}
+
+		$objConx->desconectar();
+		return $arr_datos;
+	}
+
+	public static function cartera_tiene_grupos_activos($idCartera)
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
@@ -293,35 +347,135 @@ class clsUsuario
 			return false;
 		}
 
-		$sql = "SELECT 1
+		$res = mysql_query("SELECT 1 FROM CARTERA_GRUPO WHERE id_cartera=$idCartera AND activo=1 LIMIT 1");
+		$tiene = $res && mysql_num_rows($res) === 1;
+		if (!$res) {
+			self::registrar_error_mysql('cartera_tiene_grupos_activos');
+		}
+
+		$objConx->desconectar();
+		return $tiene;
+	}
+
+	public static function validar_grupo_cartera($idCartera, $idGrupoCartera)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$idCartera = (int)$idCartera;
+		$idGrupoCartera = (int)$idGrupoCartera;
+
+		if ($idCartera <= 0) {
+			$objConx->desconectar();
+			return $idGrupoCartera === 0;
+		}
+
+		$resTieneGrupos = mysql_query("SELECT 1 FROM CARTERA_GRUPO WHERE id_cartera=$idCartera AND activo=1 LIMIT 1");
+		if (!$resTieneGrupos) {
+			self::registrar_error_mysql('validar_grupo_cartera: tiene_grupos');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$tieneGrupos = mysql_num_rows($resTieneGrupos) === 1;
+		if (!$tieneGrupos) {
+			$objConx->desconectar();
+			return $idGrupoCartera === 0;
+		}
+
+		if ($idGrupoCartera <= 0) {
+			$objConx->desconectar();
+			return false;
+		}
+
+		$resGrupo = mysql_query("SELECT 1 FROM CARTERA_GRUPO WHERE id=$idGrupoCartera AND id_cartera=$idCartera AND activo=1 LIMIT 1");
+		$valido = $resGrupo && mysql_num_rows($resGrupo) === 1;
+		if (!$resGrupo) {
+			self::registrar_error_mysql('validar_grupo_cartera: grupo');
+		}
+
+		$objConx->desconectar();
+		return $valido;
+	}
+
+	public static function validar_cartera_responsable_vigente($idCartera, $idGrupoCartera = 0)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$idCartera = (int)$idCartera;
+		$idGrupoCartera = (int)$idGrupoCartera;
+
+		if ($idCartera <= 0) {
+			$objConx->desconectar();
+			return false;
+		}
+
+		$resTieneGrupos = mysql_query("SELECT 1 FROM CARTERA_GRUPO WHERE id_cartera=$idCartera AND activo=1 LIMIT 1");
+		if (!$resTieneGrupos) {
+			self::registrar_error_mysql('validar_cartera_responsable_vigente: tiene_grupos');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$tieneGrupos = mysql_num_rows($resTieneGrupos) === 1;
+		if ($tieneGrupos) {
+			if ($idGrupoCartera <= 0) {
+				$objConx->desconectar();
+				return false;
+			}
+			$resGrupo = mysql_query("SELECT 1 FROM CARTERA_GRUPO WHERE id=$idGrupoCartera AND id_cartera=$idCartera AND activo=1 LIMIT 1");
+			if (!$resGrupo || mysql_num_rows($resGrupo) !== 1) {
+				if (!$resGrupo) {
+					self::registrar_error_mysql('validar_cartera_responsable_vigente: grupo');
+				}
+				$objConx->desconectar();
+				return false;
+			}
+			$grupoSupervisor = $idGrupoCartera;
+		} else {
+			if ($idGrupoCartera !== 0) {
+				$objConx->desconectar();
+				return false;
+			}
+			$grupoSupervisor = 0;
+		}
+
+		$sql = "SELECT
+				SUM(CASE WHEN cr.tipo_responsable = 'SUPERVISOR' AND cr.id_grupo_cartera = $grupoSupervisor THEN 1 ELSE 0 END) AS total_supervisor,
+				SUM(CASE WHEN cr.tipo_responsable = 'JEFE_OPERACION' AND cr.id_grupo_cartera = 0 THEN 1 ELSE 0 END) AS total_jefe
 			FROM cartera c
-			INNER JOIN CARTERA_GRUPO cg
-				ON cg.id_cartera = c.id
-				AND cg.activo = 1
 			INNER JOIN CARTERA_RESPONSABLE cr
 				ON cr.id_cartera = c.id
-				AND cr.id_grupo_cartera = cg.id
 				AND cr.activo = 1
 				AND (cr.fecha_inicio IS NULL OR cr.fecha_inicio <= NOW())
 				AND (cr.fecha_fin IS NULL OR cr.fecha_fin > NOW())
-			INNER JOIN tabla_log tl
-				ON tl.id = cr.id_tabla
-				AND tl.id_cartera = c.id
-				AND tl.estado = 0
 			WHERE c.id = $idCartera
-				AND c.estado = 1
-			LIMIT 1";
+			  AND c.estado = 1
+			GROUP BY c.id";
 
 		$res = mysql_query($sql);
-		$valida = $res && mysql_num_rows($res) === 1;
-
 		if (!$res) {
-			self::registrar_error_mysql('validar_cartera_con_grupo_vigente');
+			self::registrar_error_mysql('validar_cartera_responsable_vigente');
+			$objConx->desconectar();
+			return false;
 		}
+
+		$row = mysql_fetch_assoc($res);
+		$valida = $row && (int)$row['total_supervisor'] >= 1 && (int)$row['total_jefe'] >= 1;
 
 		$objConx->desconectar();
 		return $valida;
 	}
+
+	public static function validar_cartera_con_grupo_vigente($idCartera)
+	{
+		/* Compatibilidad con llamadas antiguas. Valida cartera normal o segmentada sin exigir tabla_log. */
+		return self::validar_cartera_responsable_vigente($idCartera, 0);
+	}
+
 
 	public static function consulta_cartera_por_id($idCartera)
 	{
@@ -473,11 +627,23 @@ class clsUsuario
 		return $arr_datos;
 	}
 
-	public static function registrar_empleado($APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $FECHAING, $IDREFRIGERIO = 0, $USUARIO_REGISTRO = 0, $HORARIOS = array())
+	public static function registrar_empleado($APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $idGrupoCartera, $FECHAING, $IDREFRIGERIO = 0, $USUARIO_REGISTRO = 0, $HORARIOS = array())
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
 		self::configurar_conexion_utf8();
+
+		/* Compatibilidad: si alguna llamada antigua no envía id_grupo_cartera,
+		 * el parámetro recibido aquí será la fecha de ingreso. En ese caso
+		 * se desplazan los argumentos y el grupo queda en 0.
+		 */
+		if (!is_numeric($idGrupoCartera)) {
+			$HORARIOS = $USUARIO_REGISTRO;
+			$USUARIO_REGISTRO = $IDREFRIGERIO;
+			$IDREFRIGERIO = $FECHAING;
+			$FECHAING = $idGrupoCartera;
+			$idGrupoCartera = 0;
+		}
 
 		$SEXO = (int)$SEXO;
 		$ESTCIV = (int)$ESTCIV;
@@ -487,16 +653,23 @@ class clsUsuario
 		$CARGO = (int)$CARGO;
 		$IDSUCURSAL = (int)$IDSUCURSAL;
 		$cartera = (int)$cartera;
+		$idGrupoCartera = (int)$idGrupoCartera;
+		if ($cartera <= 0) {
+			$idGrupoCartera = 0;
+		}
 		$IDREFRIGERIO = (int)$IDREFRIGERIO;
 		$USUARIO_REGISTRO = (int)$USUARIO_REGISTRO;
 		$carteraSql = $cartera > 0 ? (string)$cartera : '0';
+		$grupoCarteraSql = $idGrupoCartera > 0 ? (string)$idGrupoCartera : '0';
 
 		if (
 			$IDREFRIGERIO <= 0 ||
 			$USUARIO_REGISTRO <= 0 ||
 			!is_array($HORARIOS) ||
 			count($HORARIOS) === 0 ||
-			(self::cargo_requiere_cartera($CARGO) && $cartera <= 0)
+			(self::cargo_requiere_cartera($CARGO) && $cartera <= 0) ||
+			($cartera > 0 && !self::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) ||
+			($cartera <= 0 && $idGrupoCartera !== 0)
 		) {
 			$objConx->desconectar();
 			return false;
@@ -545,13 +718,13 @@ class clsUsuario
 			APELLIDOS, NOMBRES, FECHANAC, SEXO, DOC, ESTCIV, CARFAM, NUMHIJ,
 			DIRECCION, DISTRITO, DPTO, REFDIR, TLF, CEL, EMAIL, GRADOINS, CARGO,
 			IDSUCURSAL, USUARIO, PASSWORD, IDESTADO, fecha_registro, fecha_baja,
-			id_cartera, api_token, fecha_ing, TIPO_PERSONAL, ANYDESK, ANEXO_BACKUP
+			id_cartera, id_grupo_cartera, api_token, fecha_ing, TIPO_PERSONAL, ANYDESK, ANEXO_BACKUP
 		) VALUES (
 			UPPER('$APELLIDOS'), UPPER('$NOMBRES'), '$FECHANAC', $SEXO, '$DOC',
 			$ESTCIV, $CARFAM, $NUMHIJ, '$DIRECCION', '$DISTRITO', '$DPTO',
 			'$REFDIR', '$TLF', '$CEL', '$EMAIL', $GRADOINS, $CARGO,
 			$IDSUCURSAL, UPPER('$USUARIO'), '$passwordHash', 1,
-			'$fecha', '0000-00-00', $carteraSql, NULL, '$FECHAING',
+			'$fecha', '0000-00-00', $carteraSql, $grupoCarteraSql, NULL, '$FECHAING',
 			'HUMANO', NULL, @anexo
 		)";
 
@@ -1062,7 +1235,7 @@ class clsUsuario
 			a.IDPERSONAL, a.APELLIDOS, a.NOMBRES, a.FECHANAC, a.SEXO, a.DOC,
 			a.ESTCIV, a.CARFAM, a.NUMHIJ, a.DIRECCION, a.DISTRITO, a.DPTO,
 			a.REFDIR, a.TLF, a.CEL, a.EMAIL, a.GRADOINS, a.CARGO, a.IDSUCURSAL,
-			a.USUARIO, a.IDESTADO, a.fecha_baja, a.id_cartera, a.fecha_ing,
+			a.USUARIO, a.IDESTADO, a.fecha_baja, a.id_cartera, a.id_grupo_cartera, a.fecha_ing,
 			b.codDepartamento, b.codProvincia, b.codDistrito
 		FROM personal a
 		LEFT JOIN ubigeo b ON a.DPTO=b.departamento AND a.DISTRITO=b.distrito
@@ -1130,6 +1303,7 @@ class clsUsuario
 		$USUARIO,
 		$PASSWORD,
 		$cartera,
+		$idGrupoCartera,
 		$FECHAING,
 		$FECHABAJA,
 		$idUsuarioModifica,
@@ -1139,6 +1313,19 @@ class clsUsuario
 		$objConx = new clsConexion();
 		$objConx->conectar();
 		self::configurar_conexion_utf8();
+
+		/* Compatibilidad: si alguna llamada antigua no envía id_grupo_cartera,
+		 * el parámetro recibido aquí será la fecha de ingreso. En ese caso
+		 * se desplazan los argumentos y el grupo queda en 0.
+		 */
+		if (!is_numeric($idGrupoCartera)) {
+			$HORARIOS = $IDREFRIGERIO;
+			$IDREFRIGERIO = $idUsuarioModifica;
+			$idUsuarioModifica = $FECHABAJA;
+			$FECHABAJA = $FECHAING;
+			$FECHAING = $idGrupoCartera;
+			$idGrupoCartera = 0;
+		}
 
 		$id = (int)$id;
 		$estado = (int)$estado;
@@ -1150,15 +1337,22 @@ class clsUsuario
 		$CARGO = (int)$CARGO;
 		$IDSUCURSAL = (int)$IDSUCURSAL;
 		$cartera = (int)$cartera;
+		$idGrupoCartera = (int)$idGrupoCartera;
+		if ($cartera <= 0) {
+			$idGrupoCartera = 0;
+		}
 		$idUsuarioModifica = (int)$idUsuarioModifica;
 		$IDREFRIGERIO = (int)$IDREFRIGERIO;
 		$carteraSql = $cartera > 0 ? (string)$cartera : '0';
+		$grupoCarteraSql = $idGrupoCartera > 0 ? (string)$idGrupoCartera : '0';
 
 		if (
 			$id <= 0 ||
 			$IDREFRIGERIO <= 0 ||
 			$idUsuarioModifica <= 0 ||
-			(self::cargo_requiere_cartera($CARGO) && $cartera <= 0)
+			(self::cargo_requiere_cartera($CARGO) && $cartera <= 0) ||
+			($cartera > 0 && !self::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) ||
+			($cartera <= 0 && $idGrupoCartera !== 0)
 		) {
 			$objConx->desconectar();
 			return false;
@@ -1225,6 +1419,7 @@ class clsUsuario
 			USUARIO=UPPER('$USUARIO'),
 			fecha_baja='$FECHABAJA',
 			id_cartera=$carteraSql,
+			id_grupo_cartera=$grupoCarteraSql,
 			fecha_ing='$FECHAING'
 			$passwordSql
 		WHERE IDPERSONAL=$id";

@@ -417,28 +417,45 @@ $arr_datos = $obj->version_system();
 											<option value=""></option>
 											<?php
 											$carteraActual = isset($objUsuario['id_cartera']) ? (int)$objUsuario['id_cartera'] : 0;
-											echo '<option value="0"' . ($carteraActual === 0 ? ' selected="selected"' : '') . '>NINGUNA CARTERA</option>';
+											echo '<option value="0" data-tiene-grupos="0"' . ($carteraActual === 0 ? ' selected="selected"' : '') . '>NINGUNA CARTERA</option>';
 
 											$obj = new clsUsuario;
-											$arr_datos = $obj->consulta_carteras_con_grupo_vigente();
+											$arr_datos = $obj->consulta_carteras_responsables_vigentes();
 											$carteraActualEncontrada = false;
 											foreach ($arr_datos as $datos) {
 												$seleccionada = ((int)$datos['id'] === $carteraActual);
 												if ($seleccionada) {
 													$carteraActualEncontrada = true;
 												}
-												echo '<option value="' . h_usuario($datos['id']) . '"' . ($seleccionada ? ' selected="selected"' : '') . '>' . h_usuario($datos['nombre']) . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '" data-tiene-grupos="' . h_usuario($datos['tiene_grupos']) . '"' . ($seleccionada ? ' selected="selected"' : '') . '>' . h_usuario($datos['nombre']) . '</option>';
 											}
 
 											if ($carteraActual > 0 && !$carteraActualEncontrada) {
 												$datosCarteraActual = clsUsuario::consulta_cartera_por_id($carteraActual);
 												if (!empty($datosCarteraActual)) {
-													echo '<option value="' . h_usuario($datosCarteraActual['id']) . '" selected="selected">' . h_usuario($datosCarteraActual['nombre']) . ' | ASIGNACIÓN ACTUAL SIN GRUPO VIGENTE</option>';
+													echo '<option value="' . h_usuario($datosCarteraActual['id']) . '" data-tiene-grupos="0" selected="selected">' . h_usuario($datosCarteraActual['nombre']) . ' | ASIGNACIÓN ACTUAL</option>';
 												}
 											}
 											?>
 										</select>
 										<span id="cartera-ayuda" class="help-block text-info">Opcional para el cargo seleccionado.</span>
+									</div>
+
+									<div class="form-group" id="grupo-cartera-contenedor" style="display:none;">
+										<label>Grupo de cartera <span id="grupo-cartera-obligatorio" class="text-danger" style="display:none;">*</span></label>
+										<select id="id_grupo_cartera" name="id_grupo_cartera" data-placeholder="Seleccione" class="select">
+											<?php
+											$grupoCarteraActual = isset($objUsuario['id_grupo_cartera']) ? (int)$objUsuario['id_grupo_cartera'] : 0;
+											echo '<option value="0" data-id-cartera="0"' . ($grupoCarteraActual === 0 ? ' selected="selected"' : '') . '>SIN GRUPO</option>';
+											$obj = new clsUsuario;
+											$arr_grupos = $obj->consulta_grupos_cartera_activos();
+											foreach ($arr_grupos as $grupo) {
+												$seleccionadoGrupo = ((int)$grupo['id'] === $grupoCarteraActual);
+												echo '<option value="' . h_usuario($grupo['id']) . '" data-id-cartera="' . h_usuario($grupo['id_cartera']) . '"' . ($seleccionadoGrupo ? ' selected="selected"' : '') . '>' . h_usuario($grupo['nombre']) . '</option>';
+											}
+											?>
+										</select>
+										<span id="grupo-cartera-ayuda" class="help-block text-info">Solo aplica para carteras segmentadas, como Scotiabank.</span>
 									</div>
 
 									<blockquote>
