@@ -156,6 +156,7 @@ $arr_datos = $obj->version_system();
 		<div class="content">
 			<form action="#" class="form-m-user" method="post" accept-charset="UTF-8">
 				<div class="panel panel-flat">
+					<input type="hidden" id="estado_original" value="<?php echo (int)$objUsuario['IDESTADO']; ?>">
 					<div class="panel-heading">
 						<div class="checkbox checkbox-switch">
 							<label>
@@ -411,7 +412,7 @@ $arr_datos = $obj->version_system();
 										<span class="help-block text-info"><i class="icon-help position-right"></i> Campo obligatorio. Al cambiarlo se cierra la asignación anterior y se registra una nueva.</span>
 									</div>
 
-									<div class="form-group">
+									<div class="form-group" id="cartera-contenedor" style="display:none;">
 										<label>Cartera <span id="cartera-obligatoria" class="text-danger" style="display:none;">*</span></label>
 										<select id="cartera" name="cartera" data-placeholder="Seleccione" class="select">
 											<option value=""></option>
@@ -438,7 +439,7 @@ $arr_datos = $obj->version_system();
 											}
 											?>
 										</select>
-										<span id="cartera-ayuda" class="help-block text-info">Opcional para el cargo seleccionado.</span>
+										<span id="cartera-ayuda" class="help-block text-info">Selecciona la cartera principal del personal.</span>
 									</div>
 
 									<div class="form-group" id="grupo-cartera-contenedor" style="display:none;">

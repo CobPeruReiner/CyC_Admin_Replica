@@ -334,7 +334,7 @@ $arr_datos = $obj->version_system();
 										<span class="help-block text-info"><i class="icon-help position-right"></i> Campo obligatorio. Se guarda en personal_refrigerio.</span>
 									</div>
 
-									<div class="form-group">
+									<div class="form-group" id="cartera-contenedor" style="display:none;">
 										<label>Cartera <span id="cartera-obligatoria" class="text-danger" style="display:none;">*</span></label>
 										<select id="cartera" name="cartera" data-placeholder="Seleccione" class="select">
 											<option value=""></option>
@@ -346,7 +346,7 @@ $arr_datos = $obj->version_system();
 												echo '<option value="' . h_usuario($datos['id']) . '" data-tiene-grupos="' . h_usuario($datos['tiene_grupos']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
-										<span id="cartera-ayuda" class="help-block text-info">Opcional para el cargo seleccionado.</span>
+										<span id="cartera-ayuda" class="help-block text-info">Selecciona la cartera principal del personal.</span>
 									</div>
 
 									<div class="form-group" id="grupo-cartera-contenedor" style="display:none;">

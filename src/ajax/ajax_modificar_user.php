@@ -192,7 +192,11 @@ $cargo = entero_post_modificacion('cargo');
 $sucursal = entero_post_modificacion('suc');
 $cartera = entero_post_modificacion('cartera');
 $idGrupoCartera = entero_post_modificacion('id_grupo_cartera');
-if ($cartera <= 0) {
+/* Solo los cargos operativos administran cartera principal. */
+if (!clsUsuario::cargo_requiere_cartera($cargo)) {
+	$cartera = 0;
+	$idGrupoCartera = 0;
+} elseif ($cartera <= 0) {
 	$idGrupoCartera = 0;
 }
 $refrigerio = entero_post_modificacion('refrigerio');
@@ -208,6 +212,11 @@ if (empty($datosPersonalActual)) {
 }
 $carteraActual = isset($datosPersonalActual['id_cartera']) ? (int)$datosPersonalActual['id_cartera'] : 0;
 $grupoCarteraActual = isset($datosPersonalActual['id_grupo_cartera']) ? (int)$datosPersonalActual['id_grupo_cartera'] : 0;
+$estadoActual = isset($datosPersonalActual['IDESTADO']) ? (int)$datosPersonalActual['IDESTADO'] : 0;
+
+if ($estadoActual === 1 && $estado === 0) {
+	responder_modificacion(8, 'Para registrar una baja, use la opción Dar de baja del listado.');
+}
 
 $textosUtf8 = array(
 	'apellidos' => $apellidos,
@@ -284,7 +293,7 @@ if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera
 }
 
 if ($cartera > 0 && !clsUsuario::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) {
-	responder_modificacion(8, 'La cartera seleccionada no tiene responsables oficiales vigentes para permisos');
+	responder_modificacion(8, 'La cartera seleccionada aún no tiene la configuración necesaria.');
 }
 
 if (!clsUsuario::validar_refrigerio($refrigerio)) {
@@ -353,7 +362,18 @@ $actualizado = clsUsuario::update_empleado(
 );
 
 if (!$actualizado) {
-	responder_modificacion(11, 'No se pudo modificar el personal. No se guardaron cambios incompletos');
+	$mensaje = clsUsuario::ultimo_mensaje_usuario();
+	responder_modificacion(11, $mensaje !== '' ? $mensaje : 'No se pudieron guardar los cambios. Intente nuevamente.');
 }
 
-responder_modificacion(1, 'Modificado correctamente');
+$estadoAnterior = isset($datosPersonalActual['IDESTADO']) ? (int)$datosPersonalActual['IDESTADO'] : 0;
+if ($estadoAnterior === 0 && $estado === 1) {
+	$mensajeExito = in_array($cargo, array(15, 16), true)
+		? 'Reingreso guardado. Revise la responsabilidad de cartera.'
+		: 'Reingreso registrado correctamente.';
+} elseif ($estadoAnterior === 1 && $estado === 0) {
+	$mensajeExito = 'Baja registrada correctamente.';
+} else {
+	$mensajeExito = 'Cambios guardados correctamente.';
+}
+responder_modificacion(1, $mensajeExito);

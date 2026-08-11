@@ -3,6 +3,56 @@ date_default_timezone_set('America/Lima');
 require_once "clsConexion.php";
 class clsUsuario
 {
+	private static $ultimoMensajeUsuario = '';
+
+	private static function establecer_mensaje_usuario($mensaje)
+	{
+		self::$ultimoMensajeUsuario = trim((string)$mensaje);
+	}
+
+	public static function ultimo_mensaje_usuario()
+	{
+		return self::$ultimoMensajeUsuario;
+	}
+
+	private static function limpiar_mensaje_usuario()
+	{
+		self::$ultimoMensajeUsuario = '';
+	}
+
+	private static function mensaje_amigable_permisos($error, $alternativo = 'No se pudo completar la operación. Intente nuevamente.')
+	{
+		$error = (string)$error;
+		if (stripos($error, 'mantiene responsabilidades activas') !== false) {
+			return 'Antes de cambiar el cargo o la cartera, retire o reasigne la responsabilidad actual.';
+		}
+		if (stripos($error, 'asignada en Intranet') !== false || stripos($error, 'asignacion_tabla') !== false) {
+			return 'Antes de elegir esta cartera, asígnela al personal desde Intranet.';
+		}
+		if (stripos($error, 'cartera seleccionada') !== false || stripos($error, 'grupo no es valido') !== false || stripos($error, 'grupo no es válido') !== false) {
+			return 'Revise la cartera y el grupo seleccionados.';
+		}
+		if (stripos($error, 'sin aprobador') !== false) {
+			return 'La estructura de aprobación requiere revisión antes de continuar.';
+		}
+		return $alternativo;
+	}
+
+	private static function ejecutar_call_permisos($sql, $contexto, $mensajeAlternativo)
+	{
+		$res = mysql_query($sql);
+		if (!$res) {
+			$error = mysql_error();
+			self::registrar_error_mysql($contexto);
+			self::establecer_mensaje_usuario(self::mensaje_amigable_permisos($error, $mensajeAlternativo));
+			return false;
+		}
+		if (is_resource($res)) {
+			mysql_free_result($res);
+		}
+		return true;
+	}
+
 	private static function configurar_conexion_utf8()
 	{
 		/*
@@ -26,7 +76,7 @@ class clsUsuario
 
 	public static function cargos_con_cartera_obligatoria()
 	{
-		return array(11, 14, 15, 16, 23);
+		return array(11, 13, 14, 15, 16, 23);
 	}
 
 	public static function cargo_requiere_cartera($idCargo)
@@ -629,6 +679,7 @@ class clsUsuario
 
 	public static function registrar_empleado($APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $idGrupoCartera, $FECHAING, $IDREFRIGERIO = 0, $USUARIO_REGISTRO = 0, $HORARIOS = array())
 	{
+		self::limpiar_mensaje_usuario();
 		/* Compatibilidad: si alguna llamada antigua no envía id_grupo_cartera,
 		 * el parámetro recibido aquí será la fecha de ingreso. En ese caso
 		 * se desplazan los argumentos y el grupo queda en 0.
@@ -650,12 +701,16 @@ class clsUsuario
 		$IDSUCURSAL = (int)$IDSUCURSAL;
 		$cartera = (int)$cartera;
 		$idGrupoCartera = (int)$idGrupoCartera;
-		if ($cartera <= 0) {
+		/* Solo los cargos operativos definidos administran cartera principal desde RR.HH. */
+		if (!self::cargo_requiere_cartera($CARGO)) {
+			$cartera = 0;
+			$idGrupoCartera = 0;
+		} elseif ($cartera <= 0) {
 			$idGrupoCartera = 0;
 		}
 		$IDREFRIGERIO = (int)$IDREFRIGERIO;
 		$USUARIO_REGISTRO = (int)$USUARIO_REGISTRO;
-		$carteraSql = $cartera > 0 ? (string)$cartera : '0';
+		$carteraSql = $cartera > 0 ? (string)$cartera : 'NULL';
 		$grupoCarteraSql = $idGrupoCartera > 0 ? (string)$idGrupoCartera : '0';
 
 		if (
@@ -857,23 +912,64 @@ class clsUsuario
 		return $res;
 	}
 
-	public static function baja_user($id, $idUsuarioModifica)
+	public static function baja_user($id, $idUsuarioModifica, $motivo = 'Baja registrada desde RR.HH.')
 	{
+		self::limpiar_mensaje_usuario();
 		$objConx = new clsConexion();
 		$objConx->conectar();
+		self::configurar_conexion_utf8();
 
+		$id = (int)$id;
 		$idUsuarioModifica = (int)$idUsuarioModifica;
-		mysql_query("SET @id_usuario_modifica := {$idUsuarioModifica}") or die(mysql_error());
+		$motivo = self::escapar(trim((string)$motivo));
+		if ($motivo === '') {
+			$motivo = 'Baja registrada desde RR.HH.';
+		}
 
-		$fecha = date("Y-m-d H:i:s");
-		$sql = "UPDATE personal SET fecha_baja='{$fecha}', idestado=0 WHERE idpersonal='{$id}'";
+		if ($id <= 0 || $idUsuarioModifica <= 0) {
+			self::establecer_mensaje_usuario('No se pudo identificar al personal.');
+			$objConx->desconectar();
+			return false;
+		}
 
-		$res = mysql_query($sql) or die(mysql_error());
+		mysql_query('START TRANSACTION');
+		mysql_query("SET @id_usuario_modifica := {$idUsuarioModifica}");
 
-		$res = mysql_insert_id();
+		$resPersonal = mysql_query("SELECT IDPERSONAL FROM personal WHERE IDPERSONAL=$id AND IDESTADO=1 AND TIPO_PERSONAL='HUMANO' FOR UPDATE");
+		if (!$resPersonal || mysql_num_rows($resPersonal) !== 1) {
+			self::registrar_error_mysql('baja_user: personal no activo');
+			mysql_query('ROLLBACK');
+			self::establecer_mensaje_usuario('El personal ya se encuentra inactivo o no está disponible.');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$fecha = date('Y-m-d H:i:s');
+		if (!mysql_query("UPDATE personal SET fecha_baja='$fecha', IDESTADO=0 WHERE IDPERSONAL=$id AND IDESTADO=1")) {
+			self::registrar_error_mysql('baja_user: update personal');
+			mysql_query('ROLLBACK');
+			self::establecer_mensaje_usuario('No se pudo registrar la baja.');
+			$objConx->desconectar();
+			return false;
+		}
+
+		$sqlCore = "CALL sp_procesar_cese_personal_core($id, $idUsuarioModifica, '$motivo', 1, @rh_resp_cerradas, @rh_perm_cerrados, @rh_perm_reasignados, @rh_perm_sin_aprobador, @rh_perm_sin_cambio)";
+		if (!self::ejecutar_call_permisos($sqlCore, 'baja_user: sp_procesar_cese_personal_core', 'No se pudo completar la baja. Revise la estructura de permisos.')) {
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		if (!mysql_query('COMMIT')) {
+			self::registrar_error_mysql('baja_user: commit');
+			mysql_query('ROLLBACK');
+			self::establecer_mensaje_usuario('No se pudo completar la baja.');
+			$objConx->desconectar();
+			return false;
+		}
 
 		$objConx->desconectar();
-		return $res;
+		return true;
 	}
 
 	public static function acceso($usuario, $pass)
@@ -1313,6 +1409,7 @@ class clsUsuario
 		$IDREFRIGERIO = 0,
 		$HORARIOS = null
 	) {
+		self::limpiar_mensaje_usuario();
 		/* Compatibilidad: si alguna llamada antigua no envía id_grupo_cartera,
 		 * el parámetro recibido aquí será la fecha de ingreso. En ese caso
 		 * se desplazan los argumentos y el grupo queda en 0.
@@ -1337,12 +1434,16 @@ class clsUsuario
 		$IDSUCURSAL = (int)$IDSUCURSAL;
 		$cartera = (int)$cartera;
 		$idGrupoCartera = (int)$idGrupoCartera;
-		if ($cartera <= 0) {
+		/* Solo los cargos operativos definidos administran cartera principal desde RR.HH. */
+		if (!self::cargo_requiere_cartera($CARGO)) {
+			$cartera = 0;
+			$idGrupoCartera = 0;
+		} elseif ($cartera <= 0) {
 			$idGrupoCartera = 0;
 		}
 		$idUsuarioModifica = (int)$idUsuarioModifica;
 		$IDREFRIGERIO = (int)$IDREFRIGERIO;
-		$carteraSql = $cartera > 0 ? (string)$cartera : '0';
+		$carteraSql = $cartera > 0 ? (string)$cartera : 'NULL';
 		$grupoCarteraSql = $idGrupoCartera > 0 ? (string)$idGrupoCartera : '0';
 
 		if (
@@ -1381,6 +1482,39 @@ class clsUsuario
 
 		mysql_query('START TRANSACTION');
 		mysql_query("SET @id_usuario_modifica := $idUsuarioModifica");
+
+		$resPersonalActual = mysql_query("SELECT IDESTADO, CARGO, IFNULL(id_cartera,0) AS id_cartera, IFNULL(id_grupo_cartera,0) AS id_grupo_cartera FROM personal WHERE IDPERSONAL=$id AND TIPO_PERSONAL='HUMANO' FOR UPDATE");
+		if (!$resPersonalActual || mysql_num_rows($resPersonalActual) !== 1) {
+			self::registrar_error_mysql('update_empleado: personal no encontrado');
+			mysql_query('ROLLBACK');
+			self::establecer_mensaje_usuario('El personal no está disponible para modificar.');
+			$objConx->desconectar();
+			return false;
+		}
+		$personalActual = mysql_fetch_assoc($resPersonalActual);
+		$estadoAnterior = (int)$personalActual['IDESTADO'];
+		$cargoAnterior = (int)$personalActual['CARGO'];
+		$carteraAnterior = (int)$personalActual['id_cartera'];
+		$grupoAnterior = (int)$personalActual['id_grupo_cartera'];
+		$cambioContexto = ($cargoAnterior !== $CARGO || $carteraAnterior !== $cartera || $grupoAnterior !== $idGrupoCartera);
+		$esReingreso = ($estadoAnterior === 0 && $estado === 1);
+		$esCese = ($estadoAnterior === 1 && $estado === 0);
+
+		$sqlValidar = "CALL sp_validar_actualizacion_personal_core($id, $estado, $CARGO, $carteraSql, $grupoCarteraSql, $idUsuarioModifica)";
+		if (!self::ejecutar_call_permisos($sqlValidar, 'update_empleado: sp_validar_actualizacion_personal_core', 'No se puede aplicar este cambio en este momento.')) {
+			mysql_query('ROLLBACK');
+			$objConx->desconectar();
+			return false;
+		}
+
+		if ($esReingreso) {
+			$sqlReingreso = "CALL sp_preparar_reingreso_personal_core($id, $idUsuarioModifica, 'Reingreso registrado desde RR.HH.', @rh_resp_heredadas, @rh_reasignados_heredados, @rh_sin_aprobador_heredados, @rh_sin_cambio_heredados)";
+			if (!self::ejecutar_call_permisos($sqlReingreso, 'update_empleado: sp_preparar_reingreso_personal_core', 'No se pudo preparar el reingreso.')) {
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+		}
 
 		$resRefrigerio = mysql_query("SELECT IDREFRIGERIO FROM refrigerio WHERE IDREFRIGERIO=$IDREFRIGERIO AND IDESTADO=1 LIMIT 1");
 		if (!$resRefrigerio || mysql_num_rows($resRefrigerio) !== 1) {
@@ -1433,8 +1567,26 @@ class clsUsuario
 		if (!mysql_query($sql)) {
 			self::registrar_error_mysql('update_empleado: personal');
 			mysql_query('ROLLBACK');
+			self::establecer_mensaje_usuario('No se pudieron guardar los cambios.');
 			$objConx->desconectar();
 			return false;
+		}
+
+		if ($esCese) {
+			$sqlCese = "CALL sp_procesar_cese_personal_core($id, $idUsuarioModifica, 'Baja registrada desde RR.HH.', 1, @rh_resp_cerradas, @rh_perm_cerrados, @rh_perm_reasignados, @rh_perm_sin_aprobador, @rh_perm_sin_cambio)";
+			if (!self::ejecutar_call_permisos($sqlCese, 'update_empleado: sp_procesar_cese_personal_core', 'No se pudo completar la baja.')) {
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
+		} elseif ($estado === 1 && ($esReingreso || $cambioContexto)) {
+			$motivoPost = $esReingreso ? 'Reingreso registrado desde RR.HH.' : 'Actualización de cargo o cartera desde RR.HH.';
+			$sqlPost = "CALL sp_post_actualizacion_personal_core($id, $idUsuarioModifica, '$motivoPost', @rh_perm_propios, @rh_reasignados_aprobador, @rh_sin_aprobador_aprobador, @rh_sin_cambio_aprobador)";
+			if (!self::ejecutar_call_permisos($sqlPost, 'update_empleado: sp_post_actualizacion_personal_core', 'Los datos cambiaron, pero no se pudo actualizar la ruta de aprobación.')) {
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
 		}
 
 		$resActual = mysql_query("SELECT ID, ID_REFRIGERIO FROM personal_refrigerio WHERE ID_PERSONAL=$id AND IDESTADO=1 ORDER BY ID DESC LIMIT 1 FOR UPDATE");

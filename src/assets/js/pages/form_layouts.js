@@ -64,6 +64,8 @@ function actualizarCarteraUsuario() {
   var $cargo = $formulario.find("#cargo");
   var $cartera = $formulario.find("#cartera");
   var $grupo = $formulario.find("#id_grupo_cartera");
+  var $contenedorCartera = $formulario.find("#cartera-contenedor");
+  var $contenedorGrupo = $formulario.find("#grupo-cartera-contenedor");
 
   if (
     $formulario.length === 0 ||
@@ -74,39 +76,46 @@ function actualizarCarteraUsuario() {
   }
 
   var requiereCartera = cargoUsuarioRequiereCartera();
+
+  // Para cargos administrativos u otros cargos no operativos, cartera y grupo
+  // no forman parte del registro. Se ocultan y se limpian para evitar falsos positivos.
+  if (!requiereCartera) {
+    $cartera.prop("required", false).val("0").trigger("change.select2");
+    $grupo.prop("required", false).val("0").trigger("change.select2");
+    $contenedorCartera.hide();
+    $contenedorGrupo.hide();
+    jQuery("#cartera-obligatoria, #grupo-cartera-obligatorio").hide();
+    return;
+  }
+
+  $contenedorCartera.show();
+  $cartera.prop("required", true);
+  jQuery("#cartera-obligatoria").show();
+  jQuery("#cartera-ayuda").text("Selecciona la cartera principal del personal.");
+
   var valorCartera = jQuery.trim(String($cartera.val() || ""));
-  var tieneGrupos = carteraUsuarioTieneGrupos();
-
-  $cartera.prop("required", requiereCartera);
-  jQuery("#cartera-obligatoria").toggle(requiereCartera);
-  jQuery("#cartera-ayuda").text(
-    requiereCartera
-      ? "Campo obligatorio para el cargo seleccionado. Define la cartera principal para permisos."
-      : "Campo opcional. Si se selecciona, define la cartera principal para permisos.",
-  );
-
-  if (requiereCartera && parseInt(valorCartera, 10) <= 0) {
+  if (parseInt(valorCartera, 10) <= 0) {
     $cartera.val("").trigger("change.select2");
     valorCartera = "";
-    tieneGrupos = false;
-  } else if (!requiereCartera && valorCartera === "") {
-    $cartera.val("0").trigger("change.select2");
-    valorCartera = "0";
-    tieneGrupos = false;
   }
 
   filtrarGruposCarteraUsuario();
-
-  jQuery("#grupo-cartera-contenedor").toggle(tieneGrupos);
+  var tieneGrupos = carteraUsuarioTieneGrupos();
+  $contenedorGrupo.toggle(tieneGrupos);
   jQuery("#grupo-cartera-obligatorio").toggle(tieneGrupos);
-  if ($grupo.length > 0) {
-    $grupo.prop("required", tieneGrupos);
+  $grupo.prop("required", tieneGrupos);
+
+  if (!tieneGrupos) {
+    $grupo.val("0").trigger("change.select2");
   }
 }
 
 function validarCarteraUsuario(cartera, idGrupoCartera) {
+  if (!cargoUsuarioRequiereCartera()) {
+    return true;
+  }
+
   if (
-    cargoUsuarioRequiereCartera() &&
     (!cartera || parseInt(cartera, 10) <= 0)
   ) {
     swal({
@@ -390,6 +399,11 @@ $(function () {
       var cartera = jQuery("#cartera").val();
       var id_grupo_cartera = jQuery("#id_grupo_cartera").val() || "0";
 
+      if (!cargoUsuarioRequiereCartera()) {
+        cartera = "0";
+        id_grupo_cartera = "0";
+      }
+
       if (!validarCarteraUsuario(cartera, id_grupo_cartera)) {
         return;
       }
@@ -406,7 +420,7 @@ $(function () {
       var arr_items = $(".multiselect").val();
       var refrigerio = jQuery("#refrigerio").val();
 
-      bootbox.confirm("¿Desea registrar usuario?", function (result) {
+      bootbox.confirm("¿Registrar este personal?", function (result) {
         if (result) {
           registrar(
             apellidos,
@@ -1361,6 +1375,11 @@ $(function () {
       var cartera = jQuery("#cartera").val();
       var id_grupo_cartera = jQuery("#id_grupo_cartera").val() || "0";
 
+      if (!cargoUsuarioRequiereCartera()) {
+        cartera = "0";
+        id_grupo_cartera = "0";
+      }
+
       if (!validarCarteraUsuario(cartera, id_grupo_cartera)) {
         return;
       }
@@ -1379,9 +1398,19 @@ $(function () {
         estado = "0";
       }
 
+      var estadoOriginal = parseInt(jQuery("#estado_original").val() || "0", 10);
+      if (estadoOriginal === 1 && estado === "0") {
+        swal({
+          title: "Use la opción Dar de baja",
+          text: "La baja se registra desde el listado para conservar su motivo e historial.",
+          type: "warning",
+        });
+        return;
+      }
+
       var id = jQuery("#id_user").val();
 
-      bootbox.confirm("¿Desea modificar usuario?", function (result) {
+      bootbox.confirm("¿Guardar los cambios?", function (result) {
         if (result) {
           modificar(
             id,
@@ -2324,7 +2353,13 @@ function registrar(
     url: "ajax/ajax_registrar_user.php",
     success: function (response) {
       if (response.codigo == 1) {
-        window.location = "datatable_basic.php";
+        swal({
+          title: "Listo",
+          text: response.mensaje || "Personal registrado correctamente.",
+          type: "success",
+        }, function () {
+          window.location = "datatable_basic.php";
+        });
       } else if (response.codigo >= 2) {
         swal({
           title: "Mensaje del Sistema",
@@ -3270,7 +3305,13 @@ function modificar(
     },
     success: function (response) {
       if (response.codigo == 1) {
-        window.location = "datatable_basic.php";
+        swal({
+          title: "Listo",
+          text: response.mensaje || "Cambios guardados correctamente.",
+          type: "success",
+        }, function () {
+          window.location = "datatable_basic.php";
+        });
       } else if (response.codigo > 1) {
         swal({
           title: "Mensaje del Sistema",

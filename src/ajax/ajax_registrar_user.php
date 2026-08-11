@@ -189,7 +189,11 @@ $cargo = entero_post_registro('cargo');
 $sucursal = entero_post_registro('suc');
 $cartera = entero_post_registro('cartera');
 $idGrupoCartera = entero_post_registro('id_grupo_cartera');
-if ($cartera <= 0) {
+/* Solo los cargos operativos administran cartera principal. */
+if (!clsUsuario::cargo_requiere_cartera($cargo)) {
+	$cartera = 0;
+	$idGrupoCartera = 0;
+} elseif ($cartera <= 0) {
 	$idGrupoCartera = 0;
 }
 $refrigerio = entero_post_registro('refrigerio');
@@ -255,7 +259,7 @@ if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera
 }
 
 if ($cartera > 0 && !clsUsuario::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) {
-	responder_registro(8, 'La cartera seleccionada no tiene responsables oficiales vigentes para permisos');
+	responder_registro(8, 'La cartera seleccionada aún no tiene la configuración necesaria.');
 }
 
 if (!clsUsuario::validar_refrigerio($refrigerio)) {
@@ -319,7 +323,8 @@ $idPersonal = clsUsuario::registrar_empleado(
 );
 
 if (!$idPersonal) {
-	responder_registro(11, 'No se pudo registrar el personal. No se guardaron cambios incompletos');
+	$mensaje = clsUsuario::ultimo_mensaje_usuario();
+	responder_registro(11, $mensaje !== '' ? $mensaje : 'No se pudo registrar el personal. Intente nuevamente.');
 }
 
-responder_registro(1, 'Registrado correctamente');
+responder_registro(1, 'Personal registrado correctamente.');

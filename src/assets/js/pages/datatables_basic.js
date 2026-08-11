@@ -1999,10 +1999,20 @@ function btn() {
   $(".btn_delete").click(function (e) {
     var id = $(this).parent().find(".txt_id").val();
     console.log(id);
-    bootbox.confirm("&#191;Desea dar de baja a usuario?", function (result) {
-      if (result) {
-        baja_user(id);
+    bootbox.prompt("Indique el motivo de la baja", function (motivo) {
+      if (motivo === null) {
+        return;
       }
+      motivo = $.trim(motivo);
+      if (motivo.length < 3) {
+        swal({
+          title: "Falta el motivo",
+          text: "Ingrese un motivo breve para continuar.",
+          type: "warning",
+        });
+        return;
+      }
+      baja_user(id, motivo);
     });
   });
 
@@ -2160,16 +2170,34 @@ function btn_sector() {
   });
 }
 
-function baja_user(id) {
+function baja_user(id, motivo) {
   $.ajax({
-    data: { id: id },
+    type: "POST",
+    data: { id: id, motivo: motivo },
     dataType: "json",
     url: "ajax/ajax_baja_user.php",
     success: function (response) {
-      console.log(response);
       if (response.codigo == 1) {
+        swal({
+          title: "Listo",
+          text: response.mensaje || "Baja registrada correctamente.",
+          type: "success",
+        });
         listar_usuarios();
+      } else {
+        swal({
+          title: "No se pudo completar",
+          text: response.mensaje || "No se pudo registrar la baja.",
+          type: "error",
+        });
       }
+    },
+    error: function () {
+      swal({
+        title: "No se pudo completar",
+        text: "Ocurrió un problema al procesar la baja.",
+        type: "error",
+      });
     },
   });
 }
