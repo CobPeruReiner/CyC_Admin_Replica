@@ -1,4 +1,4 @@
-﻿$(function () {
+$(function () {
   /*probando*/
   $.extend($.fn.dataTable.defaults, {
     autoWidth: false,
@@ -1588,7 +1588,7 @@ function listar_usuarios() {
             render: function (data, type, row, meta) {
               return (
                 '<input class="txt_id" type="hidden" value="' +
-                data[0].split("-")[1] +
+                (data[0] && String(data[0]).indexOf("-") !== -1 ? String(data[0]).split("-").pop() : String(data[0] || "")) +
                 '"/><button class="btn_update" type="button"><i class="icon-reload-alt" style="font-size: 12px;"></i> </button><button class="btn_delete" type="button"><i class="icon-trash-alt" style="font-size: 12px;"></i> </button>'
               );
             },

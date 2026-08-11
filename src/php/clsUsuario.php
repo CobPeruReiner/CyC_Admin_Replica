@@ -1221,7 +1221,7 @@ class clsUsuario
 		self::configurar_conexion_utf8();
 
 		$sql = "SELECT
-			CONCAT(YEAR(b.fecha_registro), '-', LPAD(b.idpersonal, 5, '0')) AS idpersonal,
+			CONCAT(COALESCE(YEAR(b.fecha_registro), YEAR(b.fecha_ing), YEAR(CURDATE())), '-', LPAD(b.idpersonal, 5, '0')) AS idpersonal,
 			CONCAT(b.NOMBRES, ' ', b.APELLIDOS) AS empleado,
 			b.DOC AS dni,
 			'********' AS password,
