@@ -190,9 +190,10 @@ $arr_datos = $obj->version_system();
 											$obj = new clsUsuario;
 											$arr_datos = $obj->consulta_tipo();
 											foreach ($arr_datos as $datos)
-												echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '">' . h_usuario($datos['nombre']) . '</option>';
+												echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '" data-alta-sin-cartera="' . h_usuario($datos['alta_sin_cartera']) . '">' . h_usuario($datos['nombre']) . '</option>';
 											?>
 										</select>
+									<span id="cargo-alta-cartera-ayuda" class="help-block text-info" style="display:none;"><i class="icon-help position-right"></i> Jefe de Operaciones/Supervisor se registra inicialmente sin cartera. La responsabilidad se asigna después desde Intranet.</span>
 									</div>
 
 									<div class="form-group">

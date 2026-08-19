@@ -166,7 +166,8 @@ if (!isset($_POST['arr_items']) || !is_array($_POST['arr_items']) || count($_POS
 }
 
 $idPersonal = entero_post_modificacion('id');
-$estado = entero_post_modificacion('estado') === 1 ? 1 : 0;
+$estadoSolicitado = entero_post_modificacion('estado');
+$estado = in_array($estadoSolicitado, array(0, 1, 4), true) ? $estadoSolicitado : 0;
 $apellidos = texto_post_modificacion('apellidos');
 $nombres = texto_post_modificacion('nombre');
 $dni = texto_post_modificacion('dni');
@@ -214,8 +215,20 @@ $carteraActual = isset($datosPersonalActual['id_cartera']) ? (int)$datosPersonal
 $grupoCarteraActual = isset($datosPersonalActual['id_grupo_cartera']) ? (int)$datosPersonalActual['id_grupo_cartera'] : 0;
 $estadoActual = isset($datosPersonalActual['IDESTADO']) ? (int)$datosPersonalActual['IDESTADO'] : 0;
 
-if ($estadoActual === 1 && $estado === 0) {
+/*
+ * IDESTADO=4 representa vacaciones. Se conserva en modificaciones normales.
+ * El cese se procesa únicamente por la opción Dar de baja.
+ */
+if ($estadoActual === 4) {
+	$estado = 4;
+}
+
+if (($estadoActual === 1 || $estadoActual === 4) && $estado === 0) {
 	responder_modificacion(8, 'Para registrar una baja, use la opción Dar de baja del listado.');
+}
+
+if ($estadoActual === 4 && ($carteraActual !== $cartera || $grupoCarteraActual !== $idGrupoCartera || (int)$datosPersonalActual['CARGO'] !== $cargo)) {
+	responder_modificacion(8, 'El personal se encuentra de vacaciones. El cargo o la cartera deben modificarse cuando retorne a estado activo.');
 }
 
 $textosUtf8 = array(
@@ -284,16 +297,23 @@ if ($sexo <= 0 || $estadoCivil <= 0 || $cargo <= 0 || $gradoInstruccion <= 0 || 
 	responder_modificacion(8, 'Uno o más campos de selección son inválidos');
 }
 
-if (clsUsuario::cargo_requiere_cartera($cargo) && $cartera <= 0) {
-	responder_modificacion(8, 'Debe seleccionar una cartera para el cargo elegido');
-}
+/*
+ * En vacaciones el contexto ya fue comparado contra el registro actual y no
+ * puede cambiar. Evitamos revalidarlo contra responsables vigentes para que
+ * una edición de datos generales no falle por cambios externos de cartera.
+ */
+if ($estadoActual !== 4) {
+	if (clsUsuario::cargo_requiere_cartera($cargo) && $cartera <= 0) {
+		responder_modificacion(8, 'Debe seleccionar una cartera para el cargo elegido');
+	}
 
-if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera)) {
-	responder_modificacion(8, 'Debe seleccionar un grupo válido para la cartera elegida');
-}
+	if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera)) {
+		responder_modificacion(8, 'Debe seleccionar un grupo válido para la cartera elegida');
+	}
 
-if ($cartera > 0 && !clsUsuario::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) {
-	responder_modificacion(8, 'La cartera seleccionada aún no tiene la configuración necesaria.');
+	if ($cartera > 0 && !clsUsuario::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) {
+		responder_modificacion(8, 'La cartera seleccionada aún no tiene la configuración necesaria.');
+	}
 }
 
 if (!clsUsuario::validar_refrigerio($refrigerio)) {

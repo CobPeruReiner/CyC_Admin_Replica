@@ -15,6 +15,19 @@ function cargoUsuarioRequiereCartera() {
   return String(valor) === "1";
 }
 
+function cargoUsuarioPermiteAltaSinCartera() {
+  var $formulario = formularioUsuarioCartera();
+
+  if ($formulario.length === 0 || !$formulario.hasClass("form-user")) {
+    return false;
+  }
+
+  var valor = $formulario
+    .find("#cargo option:selected")
+    .attr("data-alta-sin-cartera");
+  return String(valor) === "1";
+}
+
 function carteraUsuarioTieneGrupos() {
   var $formulario = formularioUsuarioCartera();
   var $carteraSeleccionada = $formulario.find("#cartera option:selected");
@@ -76,6 +89,21 @@ function actualizarCarteraUsuario() {
   }
 
   var requiereCartera = cargoUsuarioRequiereCartera();
+  var altaSinCartera = cargoUsuarioPermiteAltaSinCartera();
+  var $ayudaAlta = $formulario.find("#cargo-alta-cartera-ayuda");
+
+  $ayudaAlta.toggle(altaSinCartera);
+
+  // Jefe de Operaciones/Supervisor: el alta inicial se registra sin cartera.
+  // Intranet asignará posteriormente la responsabilidad formal.
+  if (altaSinCartera) {
+    $cartera.prop("required", false).val("0").trigger("change.select2");
+    $grupo.prop("required", false).val("0").trigger("change.select2");
+    $contenedorCartera.hide();
+    $contenedorGrupo.hide();
+    jQuery("#cartera-obligatoria, #grupo-cartera-obligatorio").hide();
+    return;
+  }
 
   // Para cargos administrativos u otros cargos no operativos, cartera y grupo
   // no forman parte del registro. Se ocultan y se limpian para evitar falsos positivos.
@@ -111,7 +139,7 @@ function actualizarCarteraUsuario() {
 }
 
 function validarCarteraUsuario(cartera, idGrupoCartera) {
-  if (!cargoUsuarioRequiereCartera()) {
+  if (!cargoUsuarioRequiereCartera() || cargoUsuarioPermiteAltaSinCartera()) {
     return true;
   }
 
@@ -399,7 +427,7 @@ $(function () {
       var cartera = jQuery("#cartera").val();
       var id_grupo_cartera = jQuery("#id_grupo_cartera").val() || "0";
 
-      if (!cargoUsuarioRequiereCartera()) {
+      if (!cargoUsuarioRequiereCartera() || cargoUsuarioPermiteAltaSinCartera()) {
         cartera = "0";
         id_grupo_cartera = "0";
       }
@@ -1392,14 +1420,18 @@ $(function () {
         id_grupo_cartera = "0";
       }
 
-      if (estado === true || estado == true) {
+      var estadoOriginal = parseInt(jQuery("#estado_original").val() || "0", 10);
+
+      if (estadoOriginal === 4) {
+        // Vacaciones se conserva: este formulario no convierte 4 en 1 ni en 0.
+        estado = "4";
+      } else if (estado === true || estado == true) {
         estado = "1";
       } else {
         estado = "0";
       }
 
-      var estadoOriginal = parseInt(jQuery("#estado_original").val() || "0", 10);
-      if (estadoOriginal === 1 && estado === "0") {
+      if ((estadoOriginal === 1 || estadoOriginal === 4) && estado === "0") {
         swal({
           title: "Use la opción Dar de baja",
           text: "La baja se registra desde el listado para conservar su motivo e historial.",

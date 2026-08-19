@@ -160,13 +160,18 @@ $arr_datos = $obj->version_system();
 					<div class="panel-heading">
 						<div class="checkbox checkbox-switch">
 							<label>
-								<?php if ($objUsuario['IDESTADO'] == 1) {
+								<?php if ((int)$objUsuario['IDESTADO'] === 4) {
+									echo ('<input type="checkbox" id="estado" name="estado" data-on-color="warning" data-off-color="danger" data-on-text="Vacaciones" data-off-text="Suspended" class="switch" checked="checked" disabled="disabled">');
+								} elseif ((int)$objUsuario['IDESTADO'] === 1) {
 									echo ('<input type="checkbox" id="estado" name="estado" data-on-color="success" data-off-color="danger" data-on-text="Active" data-off-text="Suspended" class="switch" checked="checked">');
 								} else {
 									echo ('<input type="checkbox" id="estado" name="estado" data-on-color="success" data-off-color="danger" data-on-text="Active" data-off-text="Suspended" class="switch" >');
 								} ?>
 							</label>
 						</div>
+						<?php if ((int)$objUsuario['IDESTADO'] === 4) { ?>
+							<span class="help-block text-warning" style="margin-left: 10px;"><i class="icon-info22 position-left"></i> Estado VACACIONES: se conserva al guardar. Para registrar un cese use la opción Dar de baja del listado.</span>
+						<?php } ?>
 
 						<div class="heading-elements">
 							<ul class="icons-list">
@@ -242,9 +247,9 @@ $arr_datos = $obj->version_system();
 											$arr_datos = $obj->consulta_tipo();
 											foreach ($arr_datos as $datos)
 												if ($datos['id'] == $objUsuario['CARGO']) {
-													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '" data-alta-sin-cartera="' . h_usuario($datos['alta_sin_cartera']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
 												} else {
-													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '">' . h_usuario($datos['nombre']) . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '" data-alta-sin-cartera="' . h_usuario($datos['alta_sin_cartera']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												}
 											?>
 										</select>

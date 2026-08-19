@@ -1577,6 +1577,8 @@ function listar_usuarios() {
               .find(".btn_delete")
               .removeClass("btn_delete")
               .addClass("not-active");
+          } else if (texto == "VACACIONES") {
+            $("td", row).find("label").addClass("label bg-warning-400");
           } else {
             $("td", row).find("label").addClass("label bg-success-400");
           }

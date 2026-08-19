@@ -189,8 +189,12 @@ $cargo = entero_post_registro('cargo');
 $sucursal = entero_post_registro('suc');
 $cartera = entero_post_registro('cartera');
 $idGrupoCartera = entero_post_registro('id_grupo_cartera');
-/* Solo los cargos operativos administran cartera principal. */
-if (!clsUsuario::cargo_requiere_cartera($cargo)) {
+/*
+ * Jefe de Operaciones/Supervisor se crean sin cartera en el alta inicial.
+ * Intranet asignará después la responsabilidad formal.
+ */
+$altaSinCartera = clsUsuario::cargo_permite_alta_sin_cartera($cargo);
+if (!clsUsuario::cargo_requiere_cartera($cargo) || $altaSinCartera) {
 	$cartera = 0;
 	$idGrupoCartera = 0;
 } elseif ($cartera <= 0) {
@@ -250,7 +254,7 @@ if ($sexo <= 0 || $estadoCivil <= 0 || $cargo <= 0 || $gradoInstruccion <= 0 || 
 	responder_registro(8, 'Uno o más campos de selección son inválidos');
 }
 
-if (clsUsuario::cargo_requiere_cartera($cargo) && $cartera <= 0) {
+if (clsUsuario::cargo_requiere_cartera($cargo) && !$altaSinCartera && $cartera <= 0) {
 	responder_registro(8, 'Debe seleccionar una cartera para el cargo elegido');
 }
 
@@ -325,6 +329,10 @@ $idPersonal = clsUsuario::registrar_empleado(
 if (!$idPersonal) {
 	$mensaje = clsUsuario::ultimo_mensaje_usuario();
 	responder_registro(11, $mensaje !== '' ? $mensaje : 'No se pudo registrar el personal. Intente nuevamente.');
+}
+
+if ($altaSinCartera) {
+	responder_registro(1, 'Personal registrado correctamente. Complete la asignación de cartera desde Intranet.');
 }
 
 responder_registro(1, 'Personal registrado correctamente.');

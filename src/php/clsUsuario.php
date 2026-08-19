@@ -76,12 +76,31 @@ class clsUsuario
 
 	public static function cargos_con_cartera_obligatoria()
 	{
-		return array(11, 13, 14, 15, 16, 23);
+		/*
+		 * Cargos cuyo contexto funcional depende de cartera.
+		 * Incluye Gestor de Canales Digitales (12).
+		 */
+		return array(11, 12, 13, 14, 15, 16, 23);
 	}
 
 	public static function cargo_requiere_cartera($idCargo)
 	{
 		return in_array((int)$idCargo, self::cargos_con_cartera_obligatoria(), true);
+	}
+
+	public static function cargos_alta_sin_cartera()
+	{
+		/*
+		 * Jefe de Operaciones (15) y Supervisor (16) deben existir primero
+		 * como personal. Luego Intranet les asigna la responsabilidad formal
+		 * de cartera, evitando una dependencia circular durante el alta.
+		 */
+		return array(15, 16);
+	}
+
+	public static function cargo_permite_alta_sin_cartera($idCargo)
+	{
+		return in_array((int)$idCargo, self::cargos_alta_sin_cartera(), true);
 	}
 
 
@@ -145,7 +164,8 @@ class clsUsuario
 				$arr_datos[] = array(
 					"id" => $row["id"],
 					"nombre" => $row["nombre"],
-					"requiere_cartera" => self::cargo_requiere_cartera($row["id"]) ? 1 : 0
+					"requiere_cartera" => self::cargo_requiere_cartera($row["id"]) ? 1 : 0,
+					"alta_sin_cartera" => self::cargo_permite_alta_sin_cartera($row["id"]) ? 1 : 0
 				);
 			}
 		} else {
@@ -701,8 +721,14 @@ class clsUsuario
 		$IDSUCURSAL = (int)$IDSUCURSAL;
 		$cartera = (int)$cartera;
 		$idGrupoCartera = (int)$idGrupoCartera;
-		/* Solo los cargos operativos definidos administran cartera principal desde RR.HH. */
-		if (!self::cargo_requiere_cartera($CARGO)) {
+		/*
+		 * Alta de personal:
+		 * - Cargos sin cartera: se registran sin contexto de cartera.
+		 * - Jefe de Operaciones/Supervisor: se registran inicialmente sin cartera
+		 *   y luego Intranet formaliza su responsabilidad.
+		 */
+		$altaSinCartera = self::cargo_permite_alta_sin_cartera($CARGO);
+		if (!self::cargo_requiere_cartera($CARGO) || $altaSinCartera) {
 			$cartera = 0;
 			$idGrupoCartera = 0;
 		} elseif ($cartera <= 0) {
@@ -718,7 +744,7 @@ class clsUsuario
 			$USUARIO_REGISTRO <= 0 ||
 			!is_array($HORARIOS) ||
 			count($HORARIOS) === 0 ||
-			(self::cargo_requiere_cartera($CARGO) && $cartera <= 0) ||
+			(self::cargo_requiere_cartera($CARGO) && !$altaSinCartera && $cartera <= 0) ||
 			($cartera > 0 && !self::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) ||
 			($cartera <= 0 && $idGrupoCartera !== 0)
 		) {
@@ -935,7 +961,7 @@ class clsUsuario
 		mysql_query('START TRANSACTION');
 		mysql_query("SET @id_usuario_modifica := {$idUsuarioModifica}");
 
-		$resPersonal = mysql_query("SELECT IDPERSONAL FROM personal WHERE IDPERSONAL=$id AND IDESTADO=1 AND TIPO_PERSONAL='HUMANO' FOR UPDATE");
+		$resPersonal = mysql_query("SELECT IDPERSONAL FROM personal WHERE IDPERSONAL=$id AND IDESTADO IN (1,4) AND TIPO_PERSONAL='HUMANO' FOR UPDATE");
 		if (!$resPersonal || mysql_num_rows($resPersonal) !== 1) {
 			self::registrar_error_mysql('baja_user: personal no activo');
 			mysql_query('ROLLBACK');
@@ -945,7 +971,7 @@ class clsUsuario
 		}
 
 		$fecha = date('Y-m-d H:i:s');
-		if (!mysql_query("UPDATE personal SET fecha_baja='$fecha', IDESTADO=0 WHERE IDPERSONAL=$id AND IDESTADO=1")) {
+		if (!mysql_query("UPDATE personal SET fecha_baja='$fecha', IDESTADO=0 WHERE IDPERSONAL=$id AND IDESTADO IN (1,4)")) {
 			self::registrar_error_mysql('baja_user: update personal');
 			mysql_query('ROLLBACK');
 			self::establecer_mensaje_usuario('No se pudo registrar la baja.');
@@ -1228,7 +1254,7 @@ class clsUsuario
 			b.USUARIO AS user,
 			c.nombre AS tipo,
 			COALESCE(car.cartera, 'NINGUNA CARTERA') AS cartera,
-			IF(b.IDESTADO=1, '<label>ACTIVE</label>', '<label>SUSPENDED</label>') AS estado,
+			CASE WHEN b.IDESTADO=1 THEN '<label>ACTIVE</label>' WHEN b.IDESTADO=4 THEN '<label>VACACIONES</label>' ELSE '<label>SUSPENDED</label>' END AS estado,
 			'' AS opciones
 		FROM personal b
 		LEFT JOIN cargo c ON c.id=b.CARGO
@@ -1271,7 +1297,7 @@ class clsUsuario
 					FECHANAC, if(SEXO=1,'M','F') as sexo ,b.DOC as dni, d.nombre as ESTCIV,CARFAM,NUMHIJ,b.DIRECCION,b.DISTRITO,b.DPTO,b.REFDIR,
 					b.TLF,b.CEL,b.EMAIL,e.nombre as GRADOINS,c.nombre as CARGO,
 					f.SUCURSAL as sucursal,usuario as user,b.fecha_registro,
-					if(b.IDESTADO=1,'<label>ACTIVE</label>','<label>SUSPENDED</label>') as estado, car.cartera
+					CASE WHEN b.IDESTADO=1 THEN '<label>ACTIVE</label>' WHEN b.IDESTADO=4 THEN '<label>VACACIONES</label>' ELSE '<label>SUSPENDED</label>' END as estado, car.cartera
 					FROM personal b 
 					left join cargo c on c.id=b.CARGO
 					left join estado_civil d on d.id=b.ESTCIV
@@ -1446,12 +1472,13 @@ class clsUsuario
 		$carteraSql = $cartera > 0 ? (string)$cartera : 'NULL';
 		$grupoCarteraSql = $idGrupoCartera > 0 ? (string)$idGrupoCartera : '0';
 
+		$edicionVacaciones = ($estado === 4);
 		if (
 			$id <= 0 ||
 			$IDREFRIGERIO <= 0 ||
 			$idUsuarioModifica <= 0 ||
-			(self::cargo_requiere_cartera($CARGO) && $cartera <= 0) ||
-			($cartera > 0 && !self::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) ||
+			(!$edicionVacaciones && self::cargo_requiere_cartera($CARGO) && $cartera <= 0) ||
+			(!$edicionVacaciones && $cartera > 0 && !self::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) ||
 			($cartera <= 0 && $idGrupoCartera !== 0)
 		) {
 			return false;
@@ -1496,15 +1523,52 @@ class clsUsuario
 		$cargoAnterior = (int)$personalActual['CARGO'];
 		$carteraAnterior = (int)$personalActual['id_cartera'];
 		$grupoAnterior = (int)$personalActual['id_grupo_cartera'];
-		$cambioContexto = ($cargoAnterior !== $CARGO || $carteraAnterior !== $cartera || $grupoAnterior !== $idGrupoCartera);
-		$esReingreso = ($estadoAnterior === 0 && $estado === 1);
-		$esCese = ($estadoAnterior === 1 && $estado === 0);
 
-		$sqlValidar = "CALL sp_validar_actualizacion_personal_core($id, $estado, $CARGO, $carteraSql, $grupoCarteraSql, $idUsuarioModifica)";
-		if (!self::ejecutar_call_permisos($sqlValidar, 'update_empleado: sp_validar_actualizacion_personal_core', 'No se puede aplicar este cambio en este momento.')) {
+		if (!in_array($estado, array(0, 1, 4), true)) {
 			mysql_query('ROLLBACK');
+			self::establecer_mensaje_usuario('El estado del personal no es válido.');
 			$objConx->desconectar();
 			return false;
+		}
+
+		/*
+		 * IDESTADO=4 = vacaciones. Una modificación normal de RR.HH. conserva
+		 * dicho estado; no puede convertirlo accidentalmente en cese o activo.
+		 */
+		if ($estadoAnterior === 4) {
+			$estado = 4;
+		}
+
+		$cambioContexto = ($cargoAnterior !== $CARGO || $carteraAnterior !== $cartera || $grupoAnterior !== $idGrupoCartera);
+		$esReingreso = ($estadoAnterior === 0 && $estado === 1);
+
+		/* La baja siempre se procesa por baja_user(), con motivo e historial. */
+		if (($estadoAnterior === 1 || $estadoAnterior === 4) && $estado === 0) {
+			mysql_query('ROLLBACK');
+			self::establecer_mensaje_usuario('Para registrar una baja, use la opción Dar de baja del listado.');
+			$objConx->desconectar();
+			return false;
+		}
+
+		/*
+		 * Los CORE actuales de cambio de contexto están definidos para estado 0/1.
+		 * Durante vacaciones permitimos actualizar datos generales, pero bloqueamos
+		 * cargo/cartera/grupo para no alterar la ruta de aprobación con estado 4.
+		 */
+		if ($estadoAnterior === 4 && $cambioContexto) {
+			mysql_query('ROLLBACK');
+			self::establecer_mensaje_usuario('El personal se encuentra de vacaciones. El cargo o la cartera deben modificarse cuando retorne a estado activo.');
+			$objConx->desconectar();
+			return false;
+		}
+
+		if ($estadoAnterior !== 4) {
+			$sqlValidar = "CALL sp_validar_actualizacion_personal_core($id, $estado, $CARGO, $carteraSql, $grupoCarteraSql, $idUsuarioModifica)";
+			if (!self::ejecutar_call_permisos($sqlValidar, 'update_empleado: sp_validar_actualizacion_personal_core', 'No se puede aplicar este cambio en este momento.')) {
+				mysql_query('ROLLBACK');
+				$objConx->desconectar();
+				return false;
+			}
 		}
 
 		if ($esReingreso) {
@@ -1572,14 +1636,7 @@ class clsUsuario
 			return false;
 		}
 
-		if ($esCese) {
-			$sqlCese = "CALL sp_procesar_cese_personal_core($id, $idUsuarioModifica, 'Baja registrada desde RR.HH.', 1, @rh_resp_cerradas, @rh_perm_cerrados, @rh_perm_reasignados, @rh_perm_sin_aprobador, @rh_perm_sin_cambio)";
-			if (!self::ejecutar_call_permisos($sqlCese, 'update_empleado: sp_procesar_cese_personal_core', 'No se pudo completar la baja.')) {
-				mysql_query('ROLLBACK');
-				$objConx->desconectar();
-				return false;
-			}
-		} elseif ($estado === 1 && ($esReingreso || $cambioContexto)) {
+		if ($estado === 1 && ($esReingreso || $cambioContexto)) {
 			$motivoPost = $esReingreso ? 'Reingreso registrado desde RR.HH.' : 'Actualización de cargo o cartera desde RR.HH.';
 			$sqlPost = "CALL sp_post_actualizacion_personal_core($id, $idUsuarioModifica, '$motivoPost', @rh_perm_propios, @rh_reasignados_aprobador, @rh_sin_aprobador_aprobador, @rh_sin_cambio_aprobador)";
 			if (!self::ejecutar_call_permisos($sqlPost, 'update_empleado: sp_post_actualizacion_personal_core', 'Los datos cambiaron, pero no se pudo actualizar la ruta de aprobación.')) {
