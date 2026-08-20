@@ -215,6 +215,7 @@ class clsCartera
                 LEFT JOIN cargo c ON c.id=p.CARGO
                 WHERE p.TIPO_PERSONAL='HUMANO'
                   AND p.IDESTADO IN (1,4)
+                  AND p.CARGO IN (13, 16)
                 ORDER BY p.APELLIDOS, p.NOMBRES";
         $res = mysql_query($sql) or die(mysql_error());
         $datos = array();
