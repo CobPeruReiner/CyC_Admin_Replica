@@ -639,7 +639,7 @@ class clsUsuario
 		return $arr_datos;
 	}
 
-	public static function registrar_empleado($APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $idGrupoCartera, $FECHAING, $IDREFRIGERIO = 0, $USUARIO_REGISTRO = 0, $HORARIOS = array())
+	public static function registrar_empleado($APELLIDOS, $NOMBRES, $FECHANAC, $SEXO, $DOC, $ESTCIV, $CARFAM, $NUMHIJ, $DIRECCION, $DISTRITO, $DPTO, $REFDIR, $TLF, $CEL, $EMAIL, $GRADOINS, $CARGO, $IDSUCURSAL, $USUARIO, $PASSWORD, $cartera, $idGrupoCartera, $FECHAING, $IDREFRIGERIO = 0, $USUARIO_REGISTRO = 0, $HORARIOS = array(), $CORREO_CORPORATIVO = '')
 	{
 		self::limpiar_mensaje_usuario();
 		/* Compatibilidad: si alguna llamada antigua no envía id_grupo_cartera,
@@ -714,6 +714,8 @@ class clsUsuario
 		$TLF = self::escapar(trim($TLF));
 		$CEL = self::escapar(trim($CEL));
 		$EMAIL = self::escapar(trim($EMAIL));
+		$correoCorporativoTexto = trim((string)$CORREO_CORPORATIVO);
+		$correoCorporativoSql = "'" . self::escapar($correoCorporativoTexto) . "'";
 		$USUARIO = self::escapar(trim($USUARIO));
 		$FECHAING = self::escapar(trim($FECHAING));
 		$fecha = date('Y-m-d H:i:s');
@@ -744,13 +746,13 @@ class clsUsuario
 
 		$sql = "INSERT INTO personal (
 			APELLIDOS, NOMBRES, FECHANAC, SEXO, DOC, ESTCIV, CARFAM, NUMHIJ,
-			DIRECCION, DISTRITO, DPTO, REFDIR, TLF, CEL, EMAIL, GRADOINS, CARGO,
+			DIRECCION, DISTRITO, DPTO, REFDIR, TLF, CEL, EMAIL, CORREO_CORPORATIVO, GRADOINS, CARGO,
 			IDSUCURSAL, USUARIO, PASSWORD, IDESTADO, fecha_registro, fecha_baja,
 			id_cartera, id_grupo_cartera, api_token, fecha_ing, TIPO_PERSONAL, ANYDESK, ANEXO_BACKUP
 		) VALUES (
 			UPPER('$APELLIDOS'), UPPER('$NOMBRES'), '$FECHANAC', $SEXO, '$DOC',
 			$ESTCIV, $CARFAM, $NUMHIJ, '$DIRECCION', '$DISTRITO', '$DPTO',
-			'$REFDIR', '$TLF', '$CEL', '$EMAIL', $GRADOINS, $CARGO,
+			'$REFDIR', '$TLF', '$CEL', '$EMAIL', $correoCorporativoSql, $GRADOINS, $CARGO,
 			$IDSUCURSAL, UPPER('$USUARIO'), '$passwordHash', 1,
 			'$fecha', '0000-00-00', $carteraSql, $grupoCarteraSql, NULL, '$FECHAING',
 			'HUMANO', NULL, @anexo
@@ -1303,7 +1305,7 @@ class clsUsuario
 		$sql = "SELECT
 			a.IDPERSONAL, a.APELLIDOS, a.NOMBRES, a.FECHANAC, a.SEXO, a.DOC,
 			a.ESTCIV, a.CARFAM, a.NUMHIJ, a.DIRECCION, a.DISTRITO, a.DPTO,
-			a.REFDIR, a.TLF, a.CEL, a.EMAIL, a.GRADOINS, a.CARGO, a.IDSUCURSAL,
+			a.REFDIR, a.TLF, a.CEL, a.EMAIL, a.CORREO_CORPORATIVO, a.GRADOINS, a.CARGO, a.IDSUCURSAL,
 			a.USUARIO, a.IDESTADO, a.fecha_baja, a.id_cartera, a.id_grupo_cartera, a.fecha_ing,
 			b.codDepartamento, b.codProvincia, b.codDistrito
 		FROM personal a
@@ -1377,7 +1379,8 @@ class clsUsuario
 		$FECHABAJA,
 		$idUsuarioModifica,
 		$IDREFRIGERIO = 0,
-		$HORARIOS = null
+		$HORARIOS = null,
+		$CORREO_CORPORATIVO = ''
 	) {
 		self::limpiar_mensaje_usuario();
 		/* Compatibilidad: si alguna llamada antigua no envía id_grupo_cartera,
@@ -1450,6 +1453,8 @@ class clsUsuario
 		$TLF = self::escapar(trim($TLF));
 		$CEL = self::escapar(trim($CEL));
 		$EMAIL = self::escapar(trim($EMAIL));
+		$correoCorporativoTexto = trim((string)$CORREO_CORPORATIVO);
+		$correoCorporativoSql = "'" . self::escapar($correoCorporativoTexto) . "'";
 		$USUARIO = self::escapar(trim($USUARIO));
 		$FECHAING = self::escapar(trim($FECHAING));
 		$FECHABAJA = self::escapar(trim($FECHABAJA));
@@ -1564,6 +1569,7 @@ class clsUsuario
 			TLF='$TLF',
 			CEL='$CEL',
 			EMAIL='$EMAIL',
+			CORREO_CORPORATIVO=$correoCorporativoSql,
 			GRADOINS=$GRADOINS,
 			CARGO=$CARGO,
 			IDSUCURSAL=$IDSUCURSAL,

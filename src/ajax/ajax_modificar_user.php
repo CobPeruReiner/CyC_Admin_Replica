@@ -181,6 +181,7 @@ $distrito = texto_post_modificacion('distrito');
 $departamento = texto_post_modificacion('departamento');
 $referencia = texto_post_modificacion('referencia');
 $email = texto_post_modificacion('email');
+$correoCorporativo = texto_post_modificacion('correo_corporativo');
 $telefono = texto_post_modificacion('telefono');
 $movil = texto_post_modificacion('movil');
 
@@ -242,6 +243,7 @@ $textosUtf8 = array(
 	'departamento' => $departamento,
 	'referencia' => $referencia,
 	'email' => $email,
+	'correo corporativo' => $correoCorporativo,
 	'usuario' => $usuario
 );
 
@@ -278,6 +280,10 @@ if ($fechaBaja === '' || substr($fechaBaja, 0, 10) === '0000-00-00') {
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 	responder_modificacion(9, 'Email inválido');
+}
+
+if ($correoCorporativo !== '' && !filter_var($correoCorporativo, FILTER_VALIDATE_EMAIL)) {
+	responder_modificacion(9, 'Correo corporativo inválido');
 }
 
 if ($hijos < 0) {
@@ -378,7 +384,8 @@ $actualizado = clsUsuario::update_empleado(
 	$fechaBaja,
 	$idUsuarioModifica,
 	$refrigerio,
-	$horarios
+	$horarios,
+	$correoCorporativo
 );
 
 if (!$actualizado) {

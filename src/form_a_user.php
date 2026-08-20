@@ -277,6 +277,12 @@ $arr_datos = $obj->version_system();
 									</div>
 
 									<div class="form-group">
+										<label>Correo corporativo <small>(opcional)</small></label>
+										<input type="email" id="correo_corporativo" name="correo_corporativo" class="form-control" placeholder="usuario@empresa.com" autocomplete="off" />
+										<span class="help-block">Completar solo si el personal ya cuenta con correo corporativo.</span>
+									</div>
+
+									<div class="form-group">
 										<label>Instucción</label>
 										<select id="gi" name="gi" data-placeholder="Seleccione" class="select" required="required">
 											<option value=""></option>

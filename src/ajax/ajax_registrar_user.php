@@ -177,6 +177,7 @@ $distrito = texto_post_registro('distrito');
 $departamento = texto_post_registro('departamento');
 $referencia = texto_post_registro('referencia');
 $email = texto_post_registro('email');
+$correoCorporativo = texto_post_registro('correo_corporativo');
 $telefono = texto_post_registro('telefono');
 $movil = texto_post_registro('movil');
 
@@ -214,6 +215,7 @@ $textosUtf8 = array(
 	'departamento' => $departamento,
 	'referencia' => $referencia,
 	'email' => $email,
+	'correo corporativo' => $correoCorporativo,
 	'usuario' => $usuario
 );
 
@@ -239,6 +241,10 @@ $fechaIngreso = $fechaIngresoNormalizada;
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 	responder_registro(9, 'Email inválido');
+}
+
+if ($correoCorporativo !== '' && !filter_var($correoCorporativo, FILTER_VALIDATE_EMAIL)) {
+	responder_registro(9, 'Correo corporativo inválido');
 }
 
 if ($hijos < 0) {
@@ -323,7 +329,8 @@ $idPersonal = clsUsuario::registrar_empleado(
 	$fechaIngreso,
 	$refrigerio,
 	$idUsuarioRegistro,
-	$horarios
+	$horarios,
+	$correoCorporativo
 );
 
 if (!$idPersonal) {

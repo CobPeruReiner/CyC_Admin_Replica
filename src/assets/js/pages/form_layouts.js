@@ -405,6 +405,7 @@ $(function () {
       var fechaing = obtenerFechaSqlUsuario("#fechaing");
 
       var email = jQuery("#email").val();
+      var correo_corporativo = jQuery("#correo_corporativo").val();
       var suc = jQuery("#suc").val();
       var user = jQuery("#user").val();
       var gi = jQuery("#gi").val();
@@ -451,6 +452,7 @@ $(function () {
             telefono,
             movil,
             email,
+            correo_corporativo,
             suc,
             arr_items,
             refrigerio,
@@ -1372,6 +1374,7 @@ $(function () {
       var telefono = jQuery("#telefono").val();
       var movil = jQuery("#movil").val();
       var email = jQuery("#email").val();
+      var correo_corporativo = jQuery("#correo_corporativo").val();
       var suc = jQuery("#suc").val();
 
       var user = jQuery("#user").val();
@@ -1447,6 +1450,7 @@ $(function () {
             telefono,
             movil,
             email,
+            correo_corporativo,
             suc,
             arr_items,
             refrigerio,
@@ -2326,6 +2330,7 @@ function registrar(
   telefono,
   movil,
   email,
+  correo_corporativo,
   suc,
   arr_items,
   refrigerio,
@@ -2355,6 +2360,7 @@ function registrar(
       telefono: telefono,
       movil: movil,
       email: email,
+      correo_corporativo: correo_corporativo,
       suc: suc,
       arr_items: arr_items,
       refrigerio: refrigerio,
@@ -3274,6 +3280,7 @@ function modificar(
   telefono,
   movil,
   email,
+  correo_corporativo,
   suc,
   arr_items,
   refrigerio,
@@ -3308,6 +3315,7 @@ function modificar(
       telefono: telefono,
       movil: movil,
       email: email,
+      correo_corporativo: correo_corporativo,
       suc: suc,
       arr_items: arr_items,
       refrigerio: refrigerio,
