@@ -190,14 +190,17 @@ $sucursal = entero_post_registro('suc');
 $cartera = entero_post_registro('cartera');
 $idGrupoCartera = entero_post_registro('id_grupo_cartera');
 /*
- * Jefe de Operaciones/Supervisor se crean sin cartera en el alta inicial.
- * Intranet asignará después la responsabilidad formal.
+ * RRHH define la cartera principal desde el alta.
+ * Esto no crea CARTERA_RESPONSABLE; la responsabilidad formal se administra
+ * desde la pantalla de carteras de RRHH.
  */
-$altaSinCartera = clsUsuario::cargo_permite_alta_sin_cartera($cargo);
-if (!clsUsuario::cargo_requiere_cartera($cargo) || $altaSinCartera) {
+if (!clsUsuario::cargo_requiere_cartera($cargo)) {
 	$cartera = 0;
 	$idGrupoCartera = 0;
 } elseif ($cartera <= 0) {
+	$idGrupoCartera = 0;
+}
+if ($cargo === 15) {
 	$idGrupoCartera = 0;
 }
 $refrigerio = entero_post_registro('refrigerio');
@@ -254,17 +257,14 @@ if ($sexo <= 0 || $estadoCivil <= 0 || $cargo <= 0 || $gradoInstruccion <= 0 || 
 	responder_registro(8, 'Uno o más campos de selección son inválidos');
 }
 
-if (clsUsuario::cargo_requiere_cartera($cargo) && !$altaSinCartera && $cartera <= 0) {
+if (clsUsuario::cargo_requiere_cartera($cargo) && $cartera <= 0) {
 	responder_registro(8, 'Debe seleccionar una cartera para el cargo elegido');
 }
 
-if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera)) {
+if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera, $cargo)) {
 	responder_registro(8, 'Debe seleccionar un grupo válido para la cartera elegida');
 }
 
-if ($cartera > 0 && !clsUsuario::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) {
-	responder_registro(8, 'La cartera seleccionada aún no tiene la configuración necesaria.');
-}
 
 if (!clsUsuario::validar_refrigerio($refrigerio)) {
 	responder_registro(10, 'La hora de almuerzo seleccionada no está disponible');
@@ -331,8 +331,5 @@ if (!$idPersonal) {
 	responder_registro(11, $mensaje !== '' ? $mensaje : 'No se pudo registrar el personal. Intente nuevamente.');
 }
 
-if ($altaSinCartera) {
-	responder_registro(1, 'Personal registrado correctamente. Complete la asignación de cartera desde Intranet.');
-}
 
 responder_registro(1, 'Personal registrado correctamente.');

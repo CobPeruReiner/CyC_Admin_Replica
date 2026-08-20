@@ -247,9 +247,9 @@ $arr_datos = $obj->version_system();
 											$arr_datos = $obj->consulta_tipo();
 											foreach ($arr_datos as $datos)
 												if ($datos['id'] == $objUsuario['CARGO']) {
-													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '" data-alta-sin-cartera="' . h_usuario($datos['alta_sin_cartera']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '" selected>' . h_usuario($datos['nombre']) . ' </option>';
 												} else {
-													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '" data-alta-sin-cartera="' . h_usuario($datos['alta_sin_cartera']) . '">' . h_usuario($datos['nombre']) . '</option>';
+													echo '<option value="' . h_usuario($datos['id']) . '" data-requiere-cartera="' . h_usuario($datos['requiere_cartera']) . '">' . h_usuario($datos['nombre']) . '</option>';
 												}
 											?>
 										</select>
@@ -426,7 +426,7 @@ $arr_datos = $obj->version_system();
 											echo '<option value="0" data-tiene-grupos="0"' . ($carteraActual === 0 ? ' selected="selected"' : '') . '>NINGUNA CARTERA</option>';
 
 											$obj = new clsUsuario;
-											$arr_datos = $obj->consulta_carteras_responsables_vigentes();
+											$arr_datos = $obj->consulta_carteras_activas();
 											$carteraActualEncontrada = false;
 											foreach ($arr_datos as $datos) {
 												$seleccionada = ((int)$datos['id'] === $carteraActual);

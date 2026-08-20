@@ -200,6 +200,9 @@ if (!clsUsuario::cargo_requiere_cartera($cargo)) {
 } elseif ($cartera <= 0) {
 	$idGrupoCartera = 0;
 }
+if ($cargo === 15) {
+	$idGrupoCartera = 0;
+}
 $refrigerio = entero_post_modificacion('refrigerio');
 $idUsuarioModifica = (int)$_SESSION['id_ls'];
 
@@ -299,7 +302,7 @@ if ($sexo <= 0 || $estadoCivil <= 0 || $cargo <= 0 || $gradoInstruccion <= 0 || 
 
 /*
  * En vacaciones el contexto ya fue comparado contra el registro actual y no
- * puede cambiar. Evitamos revalidarlo contra responsables vigentes para que
+ * puede cambiar. Evitamos revalidar su contexto durante vacaciones para que
  * una edición de datos generales no falle por cambios externos de cartera.
  */
 if ($estadoActual !== 4) {
@@ -307,13 +310,10 @@ if ($estadoActual !== 4) {
 		responder_modificacion(8, 'Debe seleccionar una cartera para el cargo elegido');
 	}
 
-	if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera)) {
+	if ($cartera > 0 && !clsUsuario::validar_grupo_cartera($cartera, $idGrupoCartera, $cargo)) {
 		responder_modificacion(8, 'Debe seleccionar un grupo válido para la cartera elegida');
 	}
 
-	if ($cartera > 0 && !clsUsuario::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) {
-		responder_modificacion(8, 'La cartera seleccionada aún no tiene la configuración necesaria.');
-	}
 }
 
 if (!clsUsuario::validar_refrigerio($refrigerio)) {

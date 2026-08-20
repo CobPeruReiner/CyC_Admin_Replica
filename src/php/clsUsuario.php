@@ -27,7 +27,7 @@ class clsUsuario
 			return 'Antes de cambiar el cargo o la cartera, retire o reasigne la responsabilidad actual.';
 		}
 		if (stripos($error, 'asignada en Intranet') !== false || stripos($error, 'asignacion_tabla') !== false) {
-			return 'Antes de elegir esta cartera, asígnela al personal desde Intranet.';
+			return 'La cartera o el grupo seleccionado no es válido para el contexto del personal.';
 		}
 		if (stripos($error, 'cartera seleccionada') !== false || stripos($error, 'grupo no es valido') !== false || stripos($error, 'grupo no es válido') !== false) {
 			return 'Revise la cartera y el grupo seleccionados.';
@@ -91,16 +91,16 @@ class clsUsuario
 	public static function cargos_alta_sin_cartera()
 	{
 		/*
-		 * Jefe de Operaciones (15) y Supervisor (16) deben existir primero
-		 * como personal. Luego Intranet les asigna la responsabilidad formal
-		 * de cartera, evitando una dependencia circular durante el alta.
+		 * Arquitectura RRHH: los cargos que requieren cartera (incluidos 15 y 16)
+		 * se registran con su cartera principal desde el alta.
 		 */
-		return array(15, 16);
+		return array();
 	}
 
 	public static function cargo_permite_alta_sin_cartera($idCargo)
 	{
-		return in_array((int)$idCargo, self::cargos_alta_sin_cartera(), true);
+		/* Compatibilidad con pantallas antiguas: actualmente ningún cargo aplica. */
+		return false;
 	}
 
 
@@ -300,55 +300,32 @@ class clsUsuario
 	}
 
 
-	public static function consulta_carteras_responsables_vigentes()
+	public static function consulta_carteras_activas()
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
 		self::configurar_conexion_utf8();
 
 		/*
-		 * Modelo de permisos:
-		 * - La cartera se muestra si está activa y tiene responsables oficiales vigentes.
-		 * - No se exige CARTERA_GRUPO para carteras normales.
-		 * - No se exige tabla_log, porque hay carteras válidas sin tabla operativa.
-		 * - CARTERA_GRUPO solo aplica a carteras segmentadas, como Scotiabank.
+		 * Una cartera se considera activa para operación cuando existe en
+		 * tabla_log con estado=0 y la cartera mantiene estado=1.
+		 * En la interfaz se muestra únicamente el nombre de la cartera.
 		 */
 		$sql = "SELECT
-				c.id AS id,
-				CASE
-					WHEN COUNT(DISTINCT cg.id) > 0 THEN CONCAT(
-						c.cartera,
-						' | Grupo(s): ',
-						GROUP_CONCAT(DISTINCT cg.nombre_grupo ORDER BY cg.nombre_grupo SEPARATOR ', ')
-					)
-					ELSE c.cartera
-				END AS nombre,
+				ca.id AS id,
+				ca.cartera AS nombre,
+				MIN(tl.id) AS id_tabla,
 				CASE WHEN COUNT(DISTINCT cg.id) > 0 THEN 1 ELSE 0 END AS tiene_grupos
-			FROM cartera c
+			FROM tabla_log tl
+			INNER JOIN cartera ca
+				ON tl.id_cartera = ca.id
 			LEFT JOIN CARTERA_GRUPO cg
-				ON cg.id_cartera = c.id
+				ON cg.id_cartera = ca.id
 				AND cg.activo = 1
-			WHERE c.estado = 1
-			  AND EXISTS (
-				SELECT 1
-				FROM CARTERA_RESPONSABLE crs
-				WHERE crs.id_cartera = c.id
-				  AND crs.tipo_responsable = 'SUPERVISOR'
-				  AND crs.activo = 1
-				  AND (crs.fecha_inicio IS NULL OR crs.fecha_inicio <= NOW())
-				  AND (crs.fecha_fin IS NULL OR crs.fecha_fin > NOW())
-			  )
-			  AND EXISTS (
-				SELECT 1
-				FROM CARTERA_RESPONSABLE crj
-				WHERE crj.id_cartera = c.id
-				  AND crj.tipo_responsable = 'JEFE_OPERACION'
-				  AND crj.activo = 1
-				  AND (crj.fecha_inicio IS NULL OR crj.fecha_inicio <= NOW())
-				  AND (crj.fecha_fin IS NULL OR crj.fecha_fin > NOW())
-			  )
-			GROUP BY c.id, c.cartera
-			ORDER BY c.cartera";
+			WHERE ca.estado = 1
+			  AND tl.estado = 0
+			GROUP BY ca.id, ca.cartera
+			ORDER BY ca.cartera";
 
 		$res = mysql_query($sql);
 		$arr_datos = array();
@@ -357,22 +334,29 @@ class clsUsuario
 			while ($row = mysql_fetch_assoc($res)) {
 				$arr_datos[] = array(
 					"id" => $row["id"],
+					"id_tabla" => $row["id_tabla"],
 					"nombre" => $row["nombre"],
 					"tiene_grupos" => (int)$row["tiene_grupos"]
 				);
 			}
 		} else {
-			self::registrar_error_mysql('consulta_carteras_responsables_vigentes');
+			self::registrar_error_mysql('consulta_carteras_activas');
 		}
 
 		$objConx->desconectar();
 		return $arr_datos;
 	}
 
+	public static function consulta_carteras_responsables_vigentes()
+	{
+		/* Alias temporal para no romper llamadas existentes. */
+		return self::consulta_carteras_activas();
+	}
+
 	public static function consulta_carteras_con_grupo_vigente()
 	{
-		/* Compatibilidad con llamadas antiguas. Ya no significa "con grupo". */
-		return self::consulta_carteras_responsables_vigentes();
+		/* Compatibilidad con llamadas antiguas. */
+		return self::consulta_carteras_activas();
 	}
 
 	public static function consulta_grupos_cartera_activos()
@@ -427,7 +411,7 @@ class clsUsuario
 		return $tiene;
 	}
 
-	public static function validar_grupo_cartera($idCartera, $idGrupoCartera)
+	public static function validar_grupo_cartera($idCartera, $idGrupoCartera, $idCargo = 0)
 	{
 		$objConx = new clsConexion();
 		$objConx->conectar();
@@ -435,8 +419,22 @@ class clsUsuario
 
 		$idCartera = (int)$idCartera;
 		$idGrupoCartera = (int)$idGrupoCartera;
+		$idCargo = (int)$idCargo;
 
 		if ($idCartera <= 0) {
+			$objConx->desconectar();
+			return $idGrupoCartera === 0;
+		}
+
+		$resCartera = mysql_query("SELECT 1 FROM cartera WHERE id=$idCartera AND estado=1 LIMIT 1");
+		if (!$resCartera || mysql_num_rows($resCartera) !== 1) {
+			if (!$resCartera) self::registrar_error_mysql('validar_grupo_cartera: cartera');
+			$objConx->desconectar();
+			return false;
+		}
+
+		/* Jefe de Operaciones siempre usa grupo 0, aun en cartera segmentada. */
+		if ($idCargo === 15) {
 			$objConx->desconectar();
 			return $idGrupoCartera === 0;
 		}
@@ -469,81 +467,25 @@ class clsUsuario
 		return $valido;
 	}
 
-	public static function validar_cartera_responsable_vigente($idCartera, $idGrupoCartera = 0)
+	public static function validar_cartera_activa_contexto($idCartera, $idGrupoCartera = 0, $idCargo = 0)
 	{
-		$objConx = new clsConexion();
-		$objConx->conectar();
-		self::configurar_conexion_utf8();
+		/*
+		 * Valida solamente disponibilidad de cartera/grupo. NO exige que ya exista
+		 * CARTERA_RESPONSABLE; RRHH puede configurar la responsabilidad después.
+		 */
+		return self::validar_grupo_cartera($idCartera, $idGrupoCartera, $idCargo);
+	}
 
-		$idCartera = (int)$idCartera;
-		$idGrupoCartera = (int)$idGrupoCartera;
-
-		if ($idCartera <= 0) {
-			$objConx->desconectar();
-			return false;
-		}
-
-		$resTieneGrupos = mysql_query("SELECT 1 FROM CARTERA_GRUPO WHERE id_cartera=$idCartera AND activo=1 LIMIT 1");
-		if (!$resTieneGrupos) {
-			self::registrar_error_mysql('validar_cartera_responsable_vigente: tiene_grupos');
-			$objConx->desconectar();
-			return false;
-		}
-
-		$tieneGrupos = mysql_num_rows($resTieneGrupos) === 1;
-		if ($tieneGrupos) {
-			if ($idGrupoCartera <= 0) {
-				$objConx->desconectar();
-				return false;
-			}
-			$resGrupo = mysql_query("SELECT 1 FROM CARTERA_GRUPO WHERE id=$idGrupoCartera AND id_cartera=$idCartera AND activo=1 LIMIT 1");
-			if (!$resGrupo || mysql_num_rows($resGrupo) !== 1) {
-				if (!$resGrupo) {
-					self::registrar_error_mysql('validar_cartera_responsable_vigente: grupo');
-				}
-				$objConx->desconectar();
-				return false;
-			}
-			$grupoSupervisor = $idGrupoCartera;
-		} else {
-			if ($idGrupoCartera !== 0) {
-				$objConx->desconectar();
-				return false;
-			}
-			$grupoSupervisor = 0;
-		}
-
-		$sql = "SELECT
-				SUM(CASE WHEN cr.tipo_responsable = 'SUPERVISOR' AND cr.id_grupo_cartera = $grupoSupervisor THEN 1 ELSE 0 END) AS total_supervisor,
-				SUM(CASE WHEN cr.tipo_responsable = 'JEFE_OPERACION' AND cr.id_grupo_cartera = 0 THEN 1 ELSE 0 END) AS total_jefe
-			FROM cartera c
-			INNER JOIN CARTERA_RESPONSABLE cr
-				ON cr.id_cartera = c.id
-				AND cr.activo = 1
-				AND (cr.fecha_inicio IS NULL OR cr.fecha_inicio <= NOW())
-				AND (cr.fecha_fin IS NULL OR cr.fecha_fin > NOW())
-			WHERE c.id = $idCartera
-			  AND c.estado = 1
-			GROUP BY c.id";
-
-		$res = mysql_query($sql);
-		if (!$res) {
-			self::registrar_error_mysql('validar_cartera_responsable_vigente');
-			$objConx->desconectar();
-			return false;
-		}
-
-		$row = mysql_fetch_assoc($res);
-		$valida = $row && (int)$row['total_supervisor'] >= 1 && (int)$row['total_jefe'] >= 1;
-
-		$objConx->desconectar();
-		return $valida;
+	public static function validar_cartera_responsable_vigente($idCartera, $idGrupoCartera = 0, $idCargo = 0)
+	{
+		/* Alias temporal conservado por compatibilidad con código antiguo. */
+		return self::validar_cartera_activa_contexto($idCartera, $idGrupoCartera, $idCargo);
 	}
 
 	public static function validar_cartera_con_grupo_vigente($idCartera)
 	{
-		/* Compatibilidad con llamadas antiguas. Valida cartera normal o segmentada sin exigir tabla_log. */
-		return self::validar_cartera_responsable_vigente($idCartera, 0);
+		/* Compatibilidad con llamadas antiguas para carteras no segmentadas. */
+		return self::validar_cartera_activa_contexto($idCartera, 0, 0);
 	}
 
 
@@ -724,14 +666,16 @@ class clsUsuario
 		/*
 		 * Alta de personal:
 		 * - Cargos sin cartera: se registran sin contexto de cartera.
-		 * - Jefe de Operaciones/Supervisor: se registran inicialmente sin cartera
-		 *   y luego Intranet formaliza su responsabilidad.
+		 * - Todo cargo que requiere cartera (incluidos Jefe/Supervisor) la recibe
+		 *   directamente desde RRHH. Esto NO crea responsabilidad formal.
 		 */
-		$altaSinCartera = self::cargo_permite_alta_sin_cartera($CARGO);
-		if (!self::cargo_requiere_cartera($CARGO) || $altaSinCartera) {
+		if (!self::cargo_requiere_cartera($CARGO)) {
 			$cartera = 0;
 			$idGrupoCartera = 0;
 		} elseif ($cartera <= 0) {
+			$idGrupoCartera = 0;
+		}
+		if ($CARGO === 15) {
 			$idGrupoCartera = 0;
 		}
 		$IDREFRIGERIO = (int)$IDREFRIGERIO;
@@ -744,8 +688,8 @@ class clsUsuario
 			$USUARIO_REGISTRO <= 0 ||
 			!is_array($HORARIOS) ||
 			count($HORARIOS) === 0 ||
-			(self::cargo_requiere_cartera($CARGO) && !$altaSinCartera && $cartera <= 0) ||
-			($cartera > 0 && !self::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) ||
+			(self::cargo_requiere_cartera($CARGO) && $cartera <= 0) ||
+			($cartera > 0 && !self::validar_cartera_activa_contexto($cartera, $idGrupoCartera, $CARGO)) ||
 			($cartera <= 0 && $idGrupoCartera !== 0)
 		) {
 			return false;
@@ -1467,6 +1411,9 @@ class clsUsuario
 		} elseif ($cartera <= 0) {
 			$idGrupoCartera = 0;
 		}
+		if ($CARGO === 15) {
+			$idGrupoCartera = 0;
+		}
 		$idUsuarioModifica = (int)$idUsuarioModifica;
 		$IDREFRIGERIO = (int)$IDREFRIGERIO;
 		$carteraSql = $cartera > 0 ? (string)$cartera : 'NULL';
@@ -1478,7 +1425,7 @@ class clsUsuario
 			$IDREFRIGERIO <= 0 ||
 			$idUsuarioModifica <= 0 ||
 			(!$edicionVacaciones && self::cargo_requiere_cartera($CARGO) && $cartera <= 0) ||
-			(!$edicionVacaciones && $cartera > 0 && !self::validar_cartera_responsable_vigente($cartera, $idGrupoCartera)) ||
+			(!$edicionVacaciones && $cartera > 0 && !self::validar_cartera_activa_contexto($cartera, $idGrupoCartera, $CARGO)) ||
 			($cartera <= 0 && $idGrupoCartera !== 0)
 		) {
 			return false;

@@ -15,21 +15,20 @@ function cargoUsuarioRequiereCartera() {
   return String(valor) === "1";
 }
 
-function cargoUsuarioPermiteAltaSinCartera() {
+function cargoUsuarioId() {
   var $formulario = formularioUsuarioCartera();
-
-  if ($formulario.length === 0 || !$formulario.hasClass("form-user")) {
-    return false;
-  }
-
-  var valor = $formulario
-    .find("#cargo option:selected")
-    .attr("data-alta-sin-cartera");
-  return String(valor) === "1";
+  var valor = parseInt($formulario.find("#cargo").val() || "0", 10);
+  return isNaN(valor) ? 0 : valor;
 }
 
 function carteraUsuarioTieneGrupos() {
   var $formulario = formularioUsuarioCartera();
+
+  // Jefe de Operaciones usa siempre grupo 0, incluso en cartera segmentada.
+  if (cargoUsuarioId() === 15) {
+    return false;
+  }
+
   var $carteraSeleccionada = $formulario.find("#cartera option:selected");
   return String($carteraSeleccionada.attr("data-tiene-grupos") || "0") === "1";
 }
@@ -89,21 +88,6 @@ function actualizarCarteraUsuario() {
   }
 
   var requiereCartera = cargoUsuarioRequiereCartera();
-  var altaSinCartera = cargoUsuarioPermiteAltaSinCartera();
-  var $ayudaAlta = $formulario.find("#cargo-alta-cartera-ayuda");
-
-  $ayudaAlta.toggle(altaSinCartera);
-
-  // Jefe de Operaciones/Supervisor: el alta inicial se registra sin cartera.
-  // Intranet asignará posteriormente la responsabilidad formal.
-  if (altaSinCartera) {
-    $cartera.prop("required", false).val("0").trigger("change.select2");
-    $grupo.prop("required", false).val("0").trigger("change.select2");
-    $contenedorCartera.hide();
-    $contenedorGrupo.hide();
-    jQuery("#cartera-obligatoria, #grupo-cartera-obligatorio").hide();
-    return;
-  }
 
   // Para cargos administrativos u otros cargos no operativos, cartera y grupo
   // no forman parte del registro. Se ocultan y se limpian para evitar falsos positivos.
@@ -139,7 +123,7 @@ function actualizarCarteraUsuario() {
 }
 
 function validarCarteraUsuario(cartera, idGrupoCartera) {
-  if (!cargoUsuarioRequiereCartera() || cargoUsuarioPermiteAltaSinCartera()) {
+  if (!cargoUsuarioRequiereCartera()) {
     return true;
   }
 
@@ -427,7 +411,7 @@ $(function () {
       var cartera = jQuery("#cartera").val();
       var id_grupo_cartera = jQuery("#id_grupo_cartera").val() || "0";
 
-      if (!cargoUsuarioRequiereCartera() || cargoUsuarioPermiteAltaSinCartera()) {
+      if (!cargoUsuarioRequiereCartera()) {
         cartera = "0";
         id_grupo_cartera = "0";
       }
