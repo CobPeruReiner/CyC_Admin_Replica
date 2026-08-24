@@ -41,6 +41,11 @@ if (empty($objUsuario)) {
 	exit;
 }
 
+$responsabilidadesCartera = array();
+if (clsUsuario::cargo_administra_responsabilidades_cartera(isset($objUsuario['CARGO']) ? $objUsuario['CARGO'] : 0)) {
+	$responsabilidadesCartera = clsUsuario::consulta_responsabilidades_cartera_personal($idPersonal);
+}
+
 function isCombo($idhorario, $objItem)
 {
 	foreach ($objItem as $item) {
@@ -170,7 +175,7 @@ $arr_datos = $obj->version_system();
 							</label>
 						</div>
 						<?php if ((int)$objUsuario['IDESTADO'] === 4) { ?>
-							<span class="help-block text-warning" style="margin-left: 10px;"><i class="icon-info22 position-left"></i> Estado VACACIONES: se conserva al guardar. Para registrar un cese use la opción Dar de baja del listado.</span>
+							<span class="help-block text-warning" style="margin-left: 10px;"><i class="icon-info22 position-left"></i> Estado VACACIONES.</span>
 						<?php } ?>
 
 						<div class="heading-elements">
@@ -422,6 +427,33 @@ $arr_datos = $obj->version_system();
 										</select>
 										<span class="help-block text-info"><i class="icon-help position-right"></i> Campo obligatorio. Al cambiarlo se cierra la asignación anterior y se registra una nueva.</span>
 									</div>
+
+									<?php if (count($responsabilidadesCartera) > 0) { ?>
+										<div class="form-group">
+											<label><i class="icon-briefcase position-left"></i> Carteras bajo su responsabilidad</label>
+											<div class="table-responsive">
+												<table class="table table-bordered table-striped table-xxs">
+													<thead>
+														<tr>
+															<th>Cartera</th>
+															<th>Grupo</th>
+															<th>Responsabilidad</th>
+														</tr>
+													</thead>
+													<tbody>
+														<?php foreach ($responsabilidadesCartera as $responsabilidad) { ?>
+															<tr>
+																<td><?php echo h_usuario($responsabilidad['cartera']); ?></td>
+																<td><?php echo h_usuario($responsabilidad['id_grupo_cartera'] > 0 ? $responsabilidad['nombre_grupo'] : 'General'); ?></td>
+																<td><?php echo h_usuario($responsabilidad['tipo_responsable'] === 'JEFE_OPERACION' ? 'Jefe de Operaciones' : 'Supervisor'); ?></td>
+															</tr>
+														<?php } ?>
+													</tbody>
+												</table>
+											</div>
+											<span class="help-block text-info">La asignación se administra desde la edición de la cartera.</span>
+										</div>
+									<?php } ?>
 
 									<div class="form-group" id="cartera-contenedor" style="display:none;">
 										<label>Cartera <span id="cartera-obligatoria" class="text-danger" style="display:none;">*</span></label>

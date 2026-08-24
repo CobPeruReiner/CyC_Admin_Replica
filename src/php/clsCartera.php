@@ -10,6 +10,32 @@ class clsCartera
         $objConx->conectar();
         $sql = "SELECT a.*, c.nombre as tipo, b.nombre as cliente,
                        IF(a.estado=1,'<label>ACTIVE</label>','<label>SUSPENDED</label>') as estado,
+                       COALESCE((
+                           SELECT GROUP_CONCAT(DISTINCT CONCAT(
+                               CASE WHEN crs.id_grupo_cartera=0 THEN 'General'
+                                    ELSE COALESCE(cgs.nombre_grupo, 'Grupo') END,
+                               ': ', ps.APELLIDOS, ', ', ps.NOMBRES
+                           ) ORDER BY crs.id_grupo_cartera, ps.APELLIDOS, ps.NOMBRES SEPARATOR '<br>')
+                           FROM CARTERA_RESPONSABLE crs
+                           INNER JOIN personal ps ON ps.IDPERSONAL=crs.id_personal
+                           LEFT JOIN CARTERA_GRUPO cgs ON cgs.id=crs.id_grupo_cartera
+                           WHERE crs.id_cartera=a.id
+                             AND crs.tipo_responsable='SUPERVISOR'
+                             AND crs.activo=1
+                             AND (crs.fecha_inicio IS NULL OR crs.fecha_inicio<=NOW())
+                             AND (crs.fecha_fin IS NULL OR crs.fecha_fin>NOW())
+                       ), 'Sin asignar') as supervisor,
+                       COALESCE((
+                           SELECT GROUP_CONCAT(DISTINCT CONCAT(pj.APELLIDOS, ', ', pj.NOMBRES)
+                               ORDER BY pj.APELLIDOS, pj.NOMBRES SEPARATOR '<br>')
+                           FROM CARTERA_RESPONSABLE crj
+                           INNER JOIN personal pj ON pj.IDPERSONAL=crj.id_personal
+                           WHERE crj.id_cartera=a.id
+                             AND crj.tipo_responsable='JEFE_OPERACION'
+                             AND crj.activo=1
+                             AND (crj.fecha_inicio IS NULL OR crj.fecha_inicio<=NOW())
+                             AND (crj.fecha_fin IS NULL OR crj.fecha_fin>NOW())
+                       ), 'Sin asignar') as jefe_operacion,
                        '' as opciones
                 FROM cartera a
                 LEFT JOIN cliente b ON a.idcliente=b.id
@@ -24,6 +50,8 @@ class clsCartera
                 $row["central"],
                 $row["tipo"],
                 utf8_encode($row["cliente"]),
+                utf8_encode($row["supervisor"]),
+                utf8_encode($row["jefe_operacion"]),
                 $row["estado"],
                 $row["opciones"]
             );

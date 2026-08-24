@@ -117,6 +117,8 @@
 									<th>Central</th>
 									<th>Tipo</th>
 									<th>Cliente</th>
+									<th>Supervisor responsable</th>
+									<th>Jefe de Operaciones</th>
 									<th>Estado</th>
 									<th class="text-center">Opciones</th>
 								</tr>

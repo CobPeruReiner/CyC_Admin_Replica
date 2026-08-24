@@ -1161,7 +1161,7 @@ function listar_cartera(control) {
         },
         columnDefs: [
           {
-            targets: 7,
+            targets: 9,
             data: null,
             render: function (data, type, row, meta) {
               return (

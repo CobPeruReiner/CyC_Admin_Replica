@@ -386,7 +386,7 @@ function h_cartera($valor)
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label>Motivo del cambio</label>
+                                    <label>Nota:</label>
                                     <textarea id="resp_motivo" class="form-control" rows="3" maxlength="255"
                                         placeholder="Ej.: Actualizaci&oacute;n de responsables por RRHH"></textarea>
                                     <span class="help-block">Es obligatorio cuando existe una asignaci&oacute;n, reasignaci&oacute;n o retiro y quedar&aacute; registrado en el historial.</span>

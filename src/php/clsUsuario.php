@@ -88,6 +88,16 @@ class clsUsuario
 		return in_array((int)$idCargo, self::cargos_con_cartera_obligatoria(), true);
 	}
 
+	public static function cargo_administra_responsabilidades_cartera($idCargo)
+	{
+		/*
+		 * Estos cargos pueden figurar como responsables formales en
+		 * CARTERA_RESPONSABLE. La responsabilidad no se infiere de
+		 * personal.id_cartera, sino de la tabla histórica indicada.
+		 */
+		return in_array((int)$idCargo, array(13, 15, 16), true);
+	}
+
 	public static function cargos_alta_sin_cartera()
 	{
 		/*
@@ -503,6 +513,49 @@ class clsUsuario
 			$arr_datos = array("id" => $row["id"], "nombre" => $row["nombre"]);
 		} elseif (!$res) {
 			self::registrar_error_mysql('consulta_cartera_por_id');
+		}
+
+		$objConx->desconectar();
+		return $arr_datos;
+	}
+
+	public static function consulta_responsabilidades_cartera_personal($idPersonal)
+	{
+		$objConx = new clsConexion();
+		$objConx->conectar();
+		self::configurar_conexion_utf8();
+
+		$idPersonal = (int)$idPersonal;
+		$sql = "SELECT cr.id,
+						cr.id_cartera,
+						cr.id_grupo_cartera,
+						cr.tipo_responsable,
+						ca.cartera AS cartera,
+						cg.nombre_grupo
+					FROM CARTERA_RESPONSABLE cr
+					INNER JOIN cartera ca ON ca.id=cr.id_cartera
+					LEFT JOIN CARTERA_GRUPO cg ON cg.id=cr.id_grupo_cartera
+					WHERE cr.id_personal=$idPersonal
+						AND cr.activo=1
+						AND (cr.fecha_inicio IS NULL OR cr.fecha_inicio<=NOW())
+						AND (cr.fecha_fin IS NULL OR cr.fecha_fin>NOW())
+					ORDER BY ca.cartera, cr.tipo_responsable, cr.id_grupo_cartera";
+
+		$res = mysql_query($sql);
+		$arr_datos = array();
+		if ($res) {
+			while ($row = mysql_fetch_assoc($res)) {
+				$arr_datos[] = array(
+					'id' => (int)$row['id'],
+					'id_cartera' => (int)$row['id_cartera'],
+					'id_grupo_cartera' => (int)$row['id_grupo_cartera'],
+					'tipo_responsable' => $row['tipo_responsable'],
+					'cartera' => utf8_encode($row['cartera']),
+					'nombre_grupo' => utf8_encode((string)$row['nombre_grupo'])
+				);
+			}
+		} else {
+			self::registrar_error_mysql('consulta_responsabilidades_cartera_personal');
 		}
 
 		$objConx->desconectar();
