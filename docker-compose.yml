@@ -3,16 +3,16 @@ services:
     image: cobperureiner/cyc_admin_67_app_replica:${VERSION}
 
     secrets:
-      - source: db_host
+      - source: admin_db_host_v2
         target: db_host
 
-      - source: db_user
+      - source: admin_db_user_v2
         target: db_user
 
-      - source: db_password
+      - source: admin_db_password_v2
         target: db_password
 
-      - source: db_name
+      - source: admin_db_name_v2
         target: db_name
 
       - source: admin_recaptcha_secret_key_v2
@@ -41,17 +41,10 @@ networks:
     external: true
 
 secrets:
-  db_host:
-    external: true
-
-  db_user:
-    external: true
-
-  db_password:
-    external: true
-
-  db_name:
-    external: true
+  admin_db_host_v2: { external: true }
+  admin_db_user_v2: { external: true }
+  admin_db_password_v2: { external: true }
+  admin_db_name_v2: { external: true }
 
   admin_recaptcha_secret_key_v2:
     external: true
