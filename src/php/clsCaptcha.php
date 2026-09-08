@@ -2,18 +2,27 @@
 
 class clsCaptcha
 {
+  private static function secret()
+  {
+    $path = "/run/secrets/recaptcha_secret_key";
+
+    if (!is_readable($path)) {
+      return null;
+    }
+
+    return trim(file_get_contents($path));
+  }
+
   public static function verificar($token, $ip)
   {
-    /* SECRET KEY INCRUSTADO */
-    $secret = "6Lcs1swrAAAAACtYpT1dpVRu9jRbKuyOeqdTO0y6";
+    $secret = self::secret();
 
-    if (!$token)
+    if (!$token || !$secret)
       return false;
 
     $data = http_build_query([
       "secret"   => $secret,
-      "response" => $token,
-      "remoteip" => $ip
+      "response" => $token
     ]);
 
     $options = [
