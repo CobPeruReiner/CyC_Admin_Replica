@@ -38,6 +38,9 @@ RUN mkdir -p /var/log/php \
   echo "error_log=/var/log/php/error.log"; \
   echo "date.timezone=America/Lima"; \
   echo "openssl.cafile=/etc/ssl/certs/ca-certificates.crt"; \
+  echo "session.cookie_path=/admin/"; \
+  echo "session.cookie_secure=1"; \
+  echo "session.cookie_httponly=1"; \
   } > /usr/local/etc/php/conf.d/zz-local.ini
 
 COPY ./src/ /var/www/html/

@@ -51,7 +51,8 @@ $objDescribe = clsTable::describe_table($objTable[1]);
 //var_dump($objDescribe[1]['field']);
 
 date_default_timezone_set('America/Lima');
-$con=@mysqli_connect("localhost", "cobrwbdd_clopez", "Qazokm2020.", "cobrwbdd_sistema");
+require_once __DIR__ . "/php/db_secrets.php";
+$con = admin_db_connection();
 $info = fopen ("assets/archivos/".$objTable[7] , "r" );
 $nombre_archivo = "assets/archivos/".$objTable[7];
 

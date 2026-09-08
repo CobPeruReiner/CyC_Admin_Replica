@@ -41,7 +41,8 @@
 <?php
 set_time_limit(300);
 date_default_timezone_set('America/Lima');
-$con=@mysqli_connect("localhost", "cobrwbdd_clopez", "Qazokm2020.", "cobrwbdd_sistema");
+require_once __DIR__ . "/php/db_secrets.php";
+$con = admin_db_connection();
 $info = fopen ("assets/archivos/carga_pago.csv" , "r" );
 //$info = fopen ("carga_campana.csv" , "r" );
 

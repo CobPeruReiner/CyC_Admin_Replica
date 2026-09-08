@@ -1,12 +1,6 @@
 services:
   app_replica:
-    image: cobperureiner2/cyc_admin_67_app_replica:${VERSION}
-
-    ports:
-      - target: 80
-        published: 5003
-        protocol: tcp
-        mode: ingress
+    image: cobperureiner/cyc_admin_67_app_replica:${VERSION}
 
     secrets:
       - source: db_host
@@ -35,6 +29,13 @@ services:
       rollback_config:
         order: stop-first
         parallelism: 1
+
+    networks:
+      - intranet_https_proxy
+
+networks:
+  intranet_https_proxy:
+    external: true
 
 secrets:
   db_host:
