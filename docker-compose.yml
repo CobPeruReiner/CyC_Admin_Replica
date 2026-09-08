@@ -15,7 +15,7 @@ services:
       - source: db_name
         target: db_name
 
-      - source: admin_recaptcha_secret_key
+      - source: admin_recaptcha_secret_key_v2
         target: recaptcha_secret_key
 
     deploy:
@@ -53,5 +53,5 @@ secrets:
   db_name:
     external: true
 
-  admin_recaptcha_secret_key:
+  admin_recaptcha_secret_key_v2:
     external: true
