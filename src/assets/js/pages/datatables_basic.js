@@ -55,78 +55,81 @@ $(function () {
     width: "auto",
   });
 
-  var LocationActual = window.location.pathname.split("/");
+  // El módulo puede publicarse en la raíz o bajo un prefijo (por ejemplo,
+  // /admin). Tomar siempre el último segmento evita que el prefijo impida
+  // inicializar el listado AJAX.
+  var LocationActual = window.location.pathname.split("/").pop();
   console.log(LocationActual);
 
-  if (LocationActual[1] == "datatable_basic.php") {
+  if (LocationActual == "datatable_basic.php") {
     listar_usuarios();
   }
 
-  if (LocationActual[1] == "datatable_horario.php") {
+  if (LocationActual == "datatable_horario.php") {
     listar_horarios(2);
   }
 
-  if (LocationActual[1] == "datatable_sucursal.php") {
+  if (LocationActual == "datatable_sucursal.php") {
     listar_surcusal(2);
   }
 
-  if (LocationActual[1] == "datatable_menu.php") {
+  if (LocationActual == "datatable_menu.php") {
     listar_menu(2);
   }
 
-  if (LocationActual[1] == "datatable_cliente.php") {
+  if (LocationActual == "datatable_cliente.php") {
     listar_cliente(2);
   }
 
-  if (LocationActual[1] == "datatable_cartera.php") {
+  if (LocationActual == "datatable_cartera.php") {
     listar_cartera(2);
   }
 
-  if (LocationActual[1] == "datatable_accion.php") {
+  if (LocationActual == "datatable_accion.php") {
     listar_accion(2);
   }
 
-  if (LocationActual[1] == "datatable_categoria.php") {
+  if (LocationActual == "datatable_categoria.php") {
     listar_categoria(2);
   }
 
-  if (LocationActual[1] == "datatable_efecto.php") {
+  if (LocationActual == "datatable_efecto.php") {
     listar_efecto(2);
   }
 
-  if (LocationActual[1] == "datatable_motivo.php") {
+  if (LocationActual == "datatable_motivo.php") {
     listar_motivo(2);
   }
 
-  if (LocationActual[1] == "datatable_contacto.php") {
+  if (LocationActual == "datatable_contacto.php") {
     listar_contacto(2);
   }
 
-  if (LocationActual[1] == "datatable_campana.php") {
+  if (LocationActual == "datatable_campana.php") {
     listar_campana(2);
   }
 
-  if (LocationActual[1] == "datatable_pago.php") {
+  if (LocationActual == "datatable_pago.php") {
     listar_pago(2);
   }
 
-  if (LocationActual[1] == "datatable_cuota.php") {
+  if (LocationActual == "datatable_cuota.php") {
     listar_cuota(2);
   }
 
-  if (LocationActual[1] == "datatable_telefono.php") {
+  if (LocationActual == "datatable_telefono.php") {
     listar_telefono(2);
   }
 
-  if (LocationActual[1] == "datatable_direccion.php") {
+  if (LocationActual == "datatable_direccion.php") {
     listar_direccion(2);
   }
 
-  if (LocationActual[1] == "datatable_infoadc.php") {
+  if (LocationActual == "datatable_infoadc.php") {
     listar_infoadc(2);
   }
 
-  if (LocationActual[1] == "datatable_mapa.php") {
+  if (LocationActual == "datatable_mapa.php") {
     listar_mapa(2);
   }
 });
