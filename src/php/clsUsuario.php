@@ -5,6 +5,7 @@ require_once "clsRestriccionHorario.php";
 class clsUsuario
 {
 	private static $ultimoMensajeUsuario = '';
+	private static $sesionRestringidaPorHorario = false;
 
 	private static function establecer_mensaje_usuario($mensaje)
 	{
@@ -14,6 +15,11 @@ class clsUsuario
 	public static function ultimo_mensaje_usuario()
 	{
 		return self::$ultimoMensajeUsuario;
+	}
+
+	public static function sesion_restringida_por_horario()
+	{
+		return self::$sesionRestringidaPorHorario;
 	}
 
 	private static function limpiar_mensaje_usuario()
@@ -1073,12 +1079,14 @@ class clsUsuario
 
 	public static function verificar_sesion($id_usuario)
 	{
+		self::$sesionRestringidaPorHorario = false;
 		$objConx = new clsConexion();
 		$objConx->conectar();
 		self::configurar_conexion_utf8();
 
 		$id_usuario = (int)$id_usuario;
 		if (!clsRestriccionHorario::puede_acceder_conexion($id_usuario)) {
+			self::$sesionRestringidaPorHorario = true;
 			self::establecer_mensaje_usuario(clsRestriccionHorario::ultimo_mensaje());
 			$objConx->desconectar();
 			return array();

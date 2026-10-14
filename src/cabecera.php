@@ -2,9 +2,10 @@
 	/* Las pantallas comparten esta cabecera. Revalidar el horario evita que una
 	 * sesión abierta continúe navegando cuando termina su ventana de acceso. */
 	if (!isset($_SESSION['id_ls']) || empty(clsUsuario::verificar_sesion($_SESSION['id_ls']))) {
+		$avisoHorario = clsUsuario::sesion_restringida_por_horario() ? '?acceso=horario' : '';
 		session_unset();
 		session_destroy();
-		echo '<script>window.location.replace("index.php");</script>';
+		echo '<script>window.location.replace("index.php' . $avisoHorario . '");</script>';
 		exit;
 	}
 	?>

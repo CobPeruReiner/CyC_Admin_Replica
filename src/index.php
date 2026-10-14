@@ -177,6 +177,15 @@
 
 	<script>
 		$(function() {
+			if (new URLSearchParams(window.location.search).get("acceso") === "horario") {
+				$("#valido")
+					.removeClass()
+					.addClass("alert alert-warning")
+					.fadeIn()
+					.find("label")
+					.text("Tu acceso no está disponible en este momento.");
+			}
+
 			$(document).keydown(function(e) {
 				if (e.which == 32) {
 					return false;

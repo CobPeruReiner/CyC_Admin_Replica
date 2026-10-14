@@ -37,7 +37,7 @@ class clsRestriccionHorario
         $idPersonal = (int)$idPersonal;
 
         if ($idPersonal <= 0) {
-            return self::denegar('No se pudo validar el usuario de la sesión.');
+            return self::denegar('No podemos validar tu horario en este momento.');
         }
 
         $sql = "SELECT ID_RESTRICCION_HORARIO_PLATAFORMA, ZONA_HORARIA,
@@ -51,21 +51,21 @@ class clsRestriccionHorario
 
         if (!$res) {
             error_log('restriccion_horario_plataforma: ' . mysql_error());
-            return self::denegar('La configuración de horario no está disponible.');
+            return self::denegar('No podemos validar tu horario en este momento.');
         }
 
         $restriccion = mysql_fetch_assoc($res);
         mysql_free_result($res);
 
         if (!$restriccion) {
-            return self::denegar('No existe un horario vigente para la plataforma.');
+            return self::denegar('No podemos validar tu horario en este momento.');
         }
 
         try {
             $ahora = new DateTime('now', new DateTimeZone($restriccion['ZONA_HORARIA']));
         } catch (Exception $e) {
             error_log('Zona horaria inválida para RRHH: ' . $e->getMessage());
-            return self::denegar('La configuración de zona horaria no es válida.');
+            return self::denegar('No podemos validar tu horario en este momento.');
         }
 
         $fecha = $ahora->format('Y-m-d');
@@ -90,7 +90,7 @@ class clsRestriccionHorario
 
         if (!$resExcepcion) {
             error_log('excepcion_horario_plataforma: ' . mysql_error());
-            return self::denegar('No se pudo validar la excepción de horario.');
+            return self::denegar('No podemos validar tu horario en este momento.');
         }
 
         $excepcion = mysql_fetch_assoc($resExcepcion);
@@ -98,7 +98,7 @@ class clsRestriccionHorario
 
         if ($excepcion) {
             if ($excepcion['TIPO_EXCEPCION'] === 'BLOQUEAR_ACCESO') {
-                return self::denegar('El acceso está bloqueado por una excepción vigente.');
+                return self::denegar('Tu acceso no está disponible en este momento.');
             }
 
             if ($excepcion['TIPO_EXCEPCION'] === 'SIN_RESTRICCION') {
@@ -107,14 +107,14 @@ class clsRestriccionHorario
 
             if ($excepcion['TIPO_EXCEPCION'] === 'HORARIO_PERSONALIZADO') {
                 if (empty($excepcion['HORA_INICIO']) || empty($excepcion['HORA_FIN'])) {
-                    return self::denegar('La excepción de horario personalizado está incompleta.');
+                    return self::denegar('No podemos validar tu horario en este momento.');
                 }
 
                 if (self::hora_en_rango($hora, $excepcion['HORA_INICIO'], $excepcion['HORA_FIN'])) {
                     return true;
                 }
 
-                return self::denegar('El acceso no está permitido en el horario personalizado vigente.');
+                return self::denegar('Tu acceso está disponible de ' . self::hora_legible($excepcion['HORA_INICIO']) . ' a ' . self::hora_legible($excepcion['HORA_FIN']) . '.');
             }
         }
 
@@ -123,21 +123,27 @@ class clsRestriccionHorario
             if (self::hora_en_rango($hora, $restriccion['HORA_INICIO_LUN_VIE'], $restriccion['HORA_FIN_LUN_VIE'])) {
                 return true;
             }
-            return self::denegar('El acceso está permitido de lunes a viernes entre ' . $restriccion['HORA_INICIO_LUN_VIE'] . ' y ' . $restriccion['HORA_FIN_LUN_VIE'] . '.');
+            return self::denegar('Disponible de lunes a viernes, de ' . self::hora_legible($restriccion['HORA_INICIO_LUN_VIE']) . ' a ' . self::hora_legible($restriccion['HORA_FIN_LUN_VIE']) . '.');
         }
 
         if ($diaSemana === 6) {
             if (self::hora_en_rango($hora, $restriccion['HORA_INICIO_SABADO'], $restriccion['HORA_FIN_SABADO'])) {
                 return true;
             }
-            return self::denegar('El acceso está permitido los sábados entre ' . $restriccion['HORA_INICIO_SABADO'] . ' y ' . $restriccion['HORA_FIN_SABADO'] . '.');
+            return self::denegar('Disponible los sábados, de ' . self::hora_legible($restriccion['HORA_INICIO_SABADO']) . ' a ' . self::hora_legible($restriccion['HORA_FIN_SABADO']) . '.');
         }
 
         if ((int)$restriccion['PERMITE_DOMINGO'] === 1) {
             return true;
         }
 
-        return self::denegar('La plataforma no permite accesos los domingos.');
+        return self::denegar('CyC Admin no está disponible los domingos.');
+    }
+
+    private static function hora_legible($hora)
+    {
+        $fecha = DateTime::createFromFormat('H:i:s', $hora);
+        return $fecha ? $fecha->format('g:i A') : $hora;
     }
 
     private static function hora_en_rango($horaActual, $horaInicio, $horaFin)
