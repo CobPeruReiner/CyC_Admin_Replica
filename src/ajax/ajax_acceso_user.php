@@ -52,6 +52,15 @@ if (sizeof($arr_datos) != 1) {
 	exit;
 }
 
+/* El usuario autenticado debe cumplir el horario de la plataforma antes de
+ * generar o enviar un OTP. */
+if (!clsRestriccionHorario::puede_acceder($arr_datos[0]['idpersonal'])) {
+	$responce->codigo = 5;
+	$responce->mensaje = clsRestriccionHorario::ultimo_mensaje();
+	echo json_encode($responce);
+	exit;
+}
+
 /* reset intentos */
 clsUsuario::resetAttempts($usuario);
 

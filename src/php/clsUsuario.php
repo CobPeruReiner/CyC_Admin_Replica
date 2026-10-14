@@ -1,6 +1,7 @@
 <?php
 date_default_timezone_set('America/Lima');
 require_once "clsConexion.php";
+require_once "clsRestriccionHorario.php";
 class clsUsuario
 {
 	private static $ultimoMensajeUsuario = '';
@@ -1077,6 +1078,12 @@ class clsUsuario
 		self::configurar_conexion_utf8();
 
 		$id_usuario = (int)$id_usuario;
+		if (!clsRestriccionHorario::puede_acceder_conexion($id_usuario)) {
+			self::establecer_mensaje_usuario(clsRestriccionHorario::ultimo_mensaje());
+			$objConx->desconectar();
+			return array();
+		}
+
 		$fecha = date('Y-m-d H:i:s');
 		$sql = "SELECT id_user FROM login
 			WHERE id_user=$id_usuario

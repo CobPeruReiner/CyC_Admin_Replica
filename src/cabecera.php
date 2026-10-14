@@ -1,3 +1,13 @@
+	<?php
+	/* Las pantallas comparten esta cabecera. Revalidar el horario evita que una
+	 * sesión abierta continúe navegando cuando termina su ventana de acceso. */
+	if (!isset($_SESSION['id_ls']) || empty(clsUsuario::verificar_sesion($_SESSION['id_ls']))) {
+		session_unset();
+		session_destroy();
+		echo '<script>window.location.replace("index.php");</script>';
+		exit;
+	}
+	?>
 	<!-- Main navbar -->
 	<div class="navbar navbar-inverse">
 		<div class="navbar-header">

@@ -1,4 +1,7 @@
 <?php
+require_once("php/guard_horario.php");
+admin_requerir_sesion_horario();
+
 header('Content-type: application/vnd.ms-excel');
 //header('Content-type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 header('Content-Disposition: attachment; filename="rpte_usuarios_'.date("Y-m-d").'.xls"');

@@ -35,6 +35,18 @@ if (!clsOtp::verificar($usuario, $otp)) {
 /* obtener usuario */
 $user = $_SESSION["tmp_user"];
 
+/* Revalidar el horario después del OTP para evitar que una sesión temporal
+ * iniciada antes del cierre se convierta en una sesión fuera de horario. */
+if (!clsRestriccionHorario::puede_acceder($user['idpersonal'])) {
+  unset($_SESSION["tmp_user"]);
+  $res->codigo = 3;
+  $res->mensaje = clsRestriccionHorario::ultimo_mensaje();
+  echo json_encode($res);
+  exit;
+}
+
+session_regenerate_id(true);
+
 /* crear sesión final */
 $_SESSION['nombre_ls'] = $user['empleado'];
 $_SESSION['tipo_ls']   = $user['tipo'];
